@@ -41,7 +41,7 @@ OUTCOME = {"accepted_first_pass": "accepted first paste", "accepted_after_correc
 
 def short(key: str) -> str:
     return (key.replace("profile.", "").replace("aaps.core.", "").replace("aaps.dynisf.", "dynisf ")
-            .replace("_00", ":00").replace(".", " "))
+            .replace("_00", ":00").replace(".", " ").replace("_", " "))
 
 
 def cell_value(row: dict) -> str:
