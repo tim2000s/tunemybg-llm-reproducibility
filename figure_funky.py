@@ -146,7 +146,7 @@ def main(paper=False):
              fontsize=8, color=MUTED, va="bottom", linespacing=1.4)
     OUT.mkdir(parents=True, exist_ok=True)
     if paper:
-        fig.savefig(OUT / "fig3_conversations.png", dpi=1000)
+        fig.savefig(OUT / "fig3_conversations.png", dpi=600)
         fig.savefig(OUT / "fig3_conversations.pdf")
         print("wrote", OUT / "fig3_conversations.png")
     else:

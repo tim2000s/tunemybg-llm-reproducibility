@@ -138,7 +138,7 @@ def figure2(package: dict) -> None:
     fig.suptitle("Suggested values where a model proposed a change, by model (runs changed / runs accepted at right)",
                  fontsize=9, x=0.01, ha="left", color=INK)
     fig.tight_layout(rect=(0, 0.04, 1, 0.96))
-    fig.savefig(OUT / "fig2_suggested_values.png", dpi=1000)
+    fig.savefig(OUT / "fig2_suggested_values.png", dpi=900)
     fig.savefig(OUT / "fig2_suggested_values.pdf")
     plt.close(fig)
 
