@@ -52,3 +52,21 @@ Twenty-six real model outputs were pasted into the application's result screen o
 | 26 | real_gpt54mini_med_50/run_018 (response to the repair prompt) | current_value still not copied exactly ("5m" for "5 min") | repair prompt: copy current_value for aaps.core.carb_absorption (second time) | repair prompt: copy current_value for aaps.core.carb_absorption | yes |
 
 Agreement on verdict class: 25 of 25 informative samples.
+
+## Table S3. Whether the rationale for each decision cites a figure from the record
+
+Post hoc analysis over accepted conversations. For each decision row the rationale text was searched for figures with a unit (the same extraction as the citation check) and each figure was checked against the numbers in the package. A change decision is counted as cited when at least one such figure is present in the package. Wilson 95 per cent intervals, with the decision row as the unit, are given for the cited proportion; rows are not independent within a conversation, so the intervals are indicative.
+
+| Model | Change decisions | Cited a verified figure, n (per cent; 95 per cent interval) | Cited figures, none verified | No figure in rationale | Keep decisions | Keep decisions citing a verified figure, n (per cent) |
+|---|---|---|---|---|---|---|
+| Gemini 3.6 Flash | 160 | 154 (96; 92 to 98) | 0 | 6 | 990 | 328 (33) |
+| Gemini 3.1 Pro Preview | 141 | 97 (69; 61 to 76) | 0 | 44 | 1009 | 88 (9) |
+| Gemini 3.5 Flash-Lite | 10 | 9 (90; 60 to 98) | 0 | 1 | 887 | 129 (15) |
+| GPT-5.6-sol | 20 | 17 (85; 64 to 95) | 0 | 3 | 1130 | 187 (17) |
+| GPT-5.4-mini | 2 | 0 (0; 0 to 66) | 0 | 2 | 1102 | 3 (0) |
+| Claude Opus 5 | 16 | 16 (100; 81 to 100) | 0 | 0 | 237 | 200 (84) |
+| Claude Sonnet 5 | 1 | 1 (100; 21 to 100) | 0 | 0 | 436 | 150 (34) |
+| Claude Haiku 4.5 | 27 | 27 (100; 88 to 100) | 0 | 0 | 433 | 405 (94) |
+| DeepSeek V4 Pro | 93 | 84 (90; 83 to 95) | 0 | 9 | 1011 | 105 (10) |
+| Grok 4.6 | 16 | 16 (100; 81 to 100) | 0 | 0 | 1134 | 615 (54) |
+| Llama 4 Maverick | 56 | 3 (5; 2 to 15) | 0 | 53 | 956 | 0 (0) |
