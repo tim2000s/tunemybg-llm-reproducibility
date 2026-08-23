@@ -1,0 +1,575 @@
+{
+  "summary": "14-day CGM and AAPS telemetry from Aug 7–21, 2026 (98.7% coverage, 3,995 glucose entries) reveals good overall time-in-range (86%) but sustained midday elevation (141–163 mg/dL, 08:00–17:00 local). Hypoglycemia is infrequent (5.1% below 70 mg/dL) but includes three clusters on Aug 13–14 and Aug 21, correlating with profile changes and GLP-1 dosing. AAPS profile shows basal rates 0.5–0.8 U/h, flat ISF 56 mg/dL/U, DIA 10 h, and CR 13.2 g/U (breakfast/lunch) to 10.5–12.6 g/U (evening). SMB and UAM are enabled and active. No carb entries logged (0 entries); no declared meal strategy (meal_strategies: []). Observed meal bolus strategy is reactive (45–65 min post-meal), single-bolus, under-sized relative to typical carb intake, and compensated by active SMB/UAM. Primary defect is basal insufficiency in the 10:00–16:00 window (0.7 U/h too low); secondary defect is inability to validate CR without carb logging. Automation (SMB/UAM, Dynamic ISF) is functioning correctly but cannot fully compensate for profile gaps. Root causes of midday elevation are basal insufficiency + weak/unvalidated CR + reactive bolusing without pre-bolus. GLP-1 interaction (three documented 1.25 mg doses Aug 14, 17, 20) correlates with elevated glucose days and delayed meal absorption (3–4 h peaks), suggesting gastric slowing; no formal e-carb strategy deployed. Primary recommendation: increase basal 0.7 → 0.85–0.9 U/h for 10:00–16:00 window (single, sequential change). Secondary: implement carb logging to validate CR and enable COB-based SMB. Tertiary: consider pre-bolus lead time and e-carb structure for GLP-1-slowed meals once CR is validated. No changes to automation settings are necessary; SMB/UAM and safety limits are appropriate.",
+  "analysis_steps": [
+    {
+      "key": "data_quality",
+      "status": "completed",
+      "confidence": "high",
+      "findings": "CGM coverage 98.7% (3,995 valid entries, 10 gaps, largest 65 min). Nightscout telemetry complete: 27 events, 2,315 treatments, 6,214 device statuses. Profile complete: 7 basal segments, 3 target segments, 5 CR segments, flat ISF, DIA 10 h. No data corruption, duplicates, or invalid entries. Therapy response windows (24 bolus events) and representative treatments (40 entries) present. Daily and hourly glucose summaries available for 14 days.",
+      "evidence": "telemetry.data_quality.status = 'good'; coverage_percent = 98.7; valid_entry_count = 3,995; duplicate_entry_count = 0; invalid_entry_count = 0; expected_entry_count = 4,046; estimated_cadence_minutes = 5.0. aaps_profile contains all mandatory fields: basal_segments (7), target_segments (3), carb_ratio_segments (5), isf_segments (1), dia_hours (10).",
+      "dependencies": "None.",
+      "data_gaps": "Profile history prior to Aug 7 unknown. Profile updated 2026-08-21T21:08:10Z near analysis end; applicability declared 'yes' for full period, but Aug 13 profile switch (21:23) means Aug 7–12 profile state unknown. Cannot confirm whether current basal/CR reflect pre- or post-switch. Carb entries 0; meal composition unknown."
+    },
+    {
+      "key": "safety_overview",
+      "status": "completed",
+      "confidence": "high",
+      "findings": "Hypoglycemia: 16 extremes ≤51 mg/dL documented; three clusters (Aug 13 17:14 42 mg/dL; Aug 14 18:04–18:14 48→41→41 mg/dL; Aug 21 06:19 42 mg/dL). Time below range (70 mg/dL) 5.1% overall; peaks Aug 14 (8.3%), Aug 18 (12.8%), Aug 11 (9.4%). Hyperglycemia: 16 extremes ≥285 mg/dL; two clusters (Aug 15 16:29–16:39 286→293→287 mg/dL; Aug 18 11:54–12:14 285→290→288→286→286 mg/dL). Time above range (180 mg/dL) 8.9% overall; peaks Aug 14 (20.8%), Aug 15 (13.2%), Aug 18 (15.3%), Aug 19 (13.2%). Coefficient of variation 32.6% (moderate-high for closed-loop). Daily averages range 93–136 mg/dL. Hypoglycemia correlates with Aug 13 profile switch + site change and reactive bolusing post-hyperglycemia. GLP-1 documented Aug 14, 17, 20; correlates with elevated-glucose days (avg 121–135 mg/dL), not low days. Midday (10:00–17:00) consistently elevated 132–163 mg/dL despite basal + meal bolus + SMB.",
+      "evidence": "glucose_extremes array: 16 entries ≤51 mg/dL (Aug 13 42, 47, 51, 45; Aug 14 48, 41, 41; Aug 21 42; others Aug 15 286–293 and Aug 18 285–290). daily_glucose summaries: Aug 14 average 127.8, %AR 20.8%, %BR 8.3%; Aug 15 average 135.9, %AR 13.2%; Aug 18 average 134.7, %AR 15.3%, %BR 12.8%. hourly_glucose_local: hours 14–16 (13:00–17:00 local) average 148–163 mg/dL. representative_events: GLP-1 1.25mg noted Aug 14 08:14, Aug 17 12:03, Aug 20 21:34. Profile switch and site change Aug 13 21:23–21:45. Representative loop statuses Aug 13 13:55: 'UAM Boost 2: 35.93' (extreme boost preceding 4-hour low).",
+      "dependencies": "Basal and CR analysis (Stages 3–4) clarifies whether midday elevation is basal defect, CR defect, or both. Meal bolus timing analysis (Checkpoint 3) contextualizes post-correction lows.",
+      "data_gaps": "GLP-1 gastric emptying delay not quantified. Profile change Aug 13 reason unknown; pre-Aug 13 profile state unknown. Carb entries 0; meal bolus sizes inferred from glucose response only. Extreme UAM boost Aug 13 (35.93) suggests high meal carb impact, but actual carb amount unknown."
+    },
+    {
+      "key": "basal_targets",
+      "status": "completed",
+      "confidence": "high",
+      "findings": "Overnight (00:00–08:00 local): basal 0.6–0.8 U/h produces avg glucose 93–111 mg/dL (target 90), 81–99% TIR. Hours 01–02 show 11–18% BR (54–101 min lows) despite 0.6 U/h, suggesting residual IOB from prior bolus or occasional hypoglycemia cluster. Hours 04–07 excellent (95–98% TIR). Breakfast (08:00–12:00 local): basal 0.7–0.8 U/h + presumed meal bolus produces 132–148 mg/dL (target 100), 91% TIR, 9% AR. Hour 08 rise 22 mg/dL above hour 07; hour 09 rise 15 mg/dL more (meal effect). Midday (10:00–16:00 local): basal 0.7 U/h (unchanged 10:00–16:00) produces sustained 141–162 mg/dL (48–62 above target 100), 68–92% TIR, 7–32% AR. Hour 16 peak 162.8 mg/dL (32% AR). Hour 17 begins descent (basal 0.5 U/h at 16:00 suggests change, but glucose remains 149). Evening (18:00–00:00 local): basal 0.6–0.7 U/h + presumed dinner bolus produces 105–128 mg/dL, 80–92% TIR, 0–12% AR. Hour 19 dips to 105 with 15% BR. Overnight transition to target 90 acceptable. Assessment: overnight and breakfast basals reasonable. Midday basal 0.7 U/h (10:00–16:00) is TOO LOW; endogenous glucose rise + meal carbs not suppressed. Afternoon basal 0.5 U/h (16:00–18:00) also appears low (glucose 150+ until post-meal/correction completion). Evening basal 0.6–0.7 U/h reasonable.",
+      "evidence": "telemetry.hourly_glucose_local: hour 00 avg 93.3, %BR 11.4; hour 01 avg 90.6, %BR 18.5; hour 02 avg 101.9, %BR 10.1; hours 04–06 avg 99–106, %BR 0–3; hour 08 avg 132.9, %AR 8.9; hour 09 avg 148.0, %AR 20.2; hours 10–16 avg 132–163, %AR 7–32. daily_glucose Aug 14 average 127.8, %AR 20.8%; Aug 15 average 135.9, %AR 13.2%; Aug 18 average 134.7, %AR 15.3%. aaps_profile.basal_segments: 00:00 0.6, 05:00 0.7, 06:00 0.8, 10:00 0.7, 16:00 0.5, 18:00 0.6, 19:00 0.7. Therapy response windows show glucose peaks 3–4 h after presumed meal (hour 14–16 for lunch), consistent with meal + basal insufficiency (slow correction).",
+      "dependencies": "Carb ratio analysis (Stage 4) must clarify whether CR is weak or boluses are documented incompletely; this affects interpretation of basal vs. meal coverage. SMB/UAM analysis (Checkpoint 2) confirms SMB is active but undersized to fully compensate for basal gap (max_smb_basal_minutes 15 limits bolus to ~0.175 U/pulse).",
+      "data_gaps": "Pre-Aug 13 basal profile unknown. Meal bolus sizes inferred from therapy windows; if meal boluses are not fully logged, basal assessment may be confounded. Hourly glucose averages may mask rapid swings; 5-min CGM data would clarify basal adequacy during hour transitions."
+    },
+    {
+      "key": "profile_cr_isf_dia",
+      "status": "completed",
+      "confidence": "medium",
+      "findings": "ISF: flat 56 mg/dL/U. Therapy response windows show sensitivity range 36–258 mg/dL/U depending on IOB, meal phase, and context. Small boluses (0.05–0.35 U) produce glucose changes 26–87 mg/dL/120 min, implying effective ISF 26–87 mg/dL/U. When IOB is low, changes correspond to ~56 mg/dL/U (consistent). When IOB is high or meals active, apparent ISF is weaker (26–36 mg/dL/U), possibly due to carb interference or meal carb rise masking insulin action. Midday sensitivity appears weaker (higher mg/dL/U needed to produce same glucose drop). Evening sensitivity appears stronger (lower mg/dL/U). Flat 56 is plausible average but time-of-day segmentation candidate if CR is validated. Dynamic ISF enabled (70% factor); sensitivity_ratio 0.92–1.0 observed (modest adjustments). CR: 13.2 g/U (08:00–16:00 breakfast/lunch), 10.5 g/U (16:00–20:00), 12.6 g/U (20:00–00:00), 13 g/U (00:00–04:00), 11.1 g/U (04:00–08:00). Assessment: CR 13.2 appears weak or boluses are under-sized. Therapy response Aug 9 09:01: bolus 0.1 U for presumed 30–50 g breakfast → glucose rises 110→161 (+51 despite bolus). Expected: 0.1 U × 56 ISF = 5.6 mg/dL correction; rise 51 implies ~30 g unbolused (at CR 13.2 = 2.3 U expected, delivered 0.1 U is 23× under-sized). Aug 15 11:25: bolus 2.4 U for presumed breakfast/lunch 181 mg/dL → 94 mg/dL (120 min drop 87). At CR 13.2: 40 g carbs = 3.0 U expected; 2.4 U is appropriately sized. Discrepancy suggests either (a) breakfast is small (15–25 g, not 30–50 g), (b) meal bolus documentation incomplete (therapy windows show correction-only component), or (c) CR is weak and lower boluses are intentional. Without carb logging, cannot validate. DIA: 10 hours. Therapy response windows show bolus IOB largely cleared by 360 min (~6 hours post-bolus), consistent with 10-hour DIA. Overnight lows (01:00–02:00) with ~1–2 hours IOB from dinner bolus at 19:00–20:00 are modest, supporting DIA 10 h.",
+      "evidence": "aaps_profile.isf_segments: flat [{'start_time': '00:00', 'mg_dl_per_unit': 56.0}]. therapy_response_windows: Aug 9 09:01 bolus 0.1, start 110, 120m 161, change_120m +51; Aug 15 11:25 bolus 2.4, start 181, 120m 94, change_120m −87. aaps_profile.carb_ratio_segments: [00:00 13, 04:00 11.1, 08:00 13.2, 16:00 10.5, 20:00 12.6]. representative_loop_statuses: sensitivity_ratio values 0.92–1.0 (Dynamic ISF modest). aaps_profile.dia_hours = 10.0.",
+      "dependencies": "Meal bolus strategy analysis (Checkpoint 3) contextualizes CR interpretation: if meal boluses are reactive and under-sized, CR validation requires carb logging. Basal analysis (Stage 3) depends on CR clarity: if CR is weak, basal increase might compound over-bolusing; if CR is correct and boluses are incomplete, basal increase is independent fix.",
+      "data_gaps": "Zero carb entries logged; CR validation blocked. Bolus documentation unclear: therapy response windows labeled 'Correction Bolus' may include meal components, confounding CR assessment. Time-of-day ISF variation possible but unconfirmed (observed sensitivity range 36–87 mg/dL/U; flat 56 may mask variation). Profile history prior to Aug 7 unknown; unable to confirm whether current CR/ISF reflect old or new profile."
+    },
+    {
+      "key": "automation_smb_uam",
+      "status": "completed",
+      "confidence": "high",
+      "findings": "SMB enabled (true); UAM enabled (true). SMB activation conditions: smb_always_enabled (true), smb_with_cob_enabled (false), smb_after_carbs_enabled (false), smb_with_temp_target_enabled (true), smb_with_high_temp_target_enabled (false). Configuration is conservative and appropriate. smb_always_enabled=true allows SMB to fire whenever glucose > target and IOB permits; this is correct for reactive bolusing pattern (no carbs logged). smb_with_cob_enabled=false disables COB-based SMB (appropriate because carb_treatment_entries=0; COB always 0 in AAPS). smb_with_temp_target_enabled=true permits SMB during temporary targets (e.g., recovery 108 mg/dL); appropriate. smb_with_high_temp_target_enabled=false suppresses SMB for high temp targets (e.g., exercise 135 mg/dL); safety guard appropriate. SMB strength: smb_interval_minutes 3 (aggressive, standard oref1), max_smb_basal_minutes 15 (ceiling ~0.175 U/pulse at 0.7 U/h), max_uam_smb_basal_minutes 20 (UAM ceiling ~0.233 U). Therapy response windows show 24 bolus events; SMB activity evident in loop status mentions ('SMB equals 0.2–0.5' across hours 10–17). Observed SMB boluses 0.05–0.35 U consistent with max ceiling. UAM active: min_5m_carbimpact 8 mg/dL/5 min (standard); UAM boosts visible in loop statuses (typical 1–2, extreme 35.93 Aug 13). Extreme UAM boost preceded low glucose (42 mg/dL 4 h later), suggesting UAM applied maximum allowed SMB and subsequent profile change altered kinetics. Safety limits: max_basal_u_per_hour 12 U/h, max_iob_units 25 U. Observed temp basal 0.1–4 U/h (well below 12 U/h ceiling); peak IOB ~5.9 U (well below 25 U ceiling). Neither limit constraining. Assessment: SMB/UAM configuration is appropriate and functioning correctly. SMB is active and firing regularly; UAM compensating for zero carb logging via unannounced meal detection. Midday glucose elevation persists because basal insufficiency (0.7 U/h gap of ~0.2–0.3 U/h) cannot be overcome by SMB micro-corrections alone (max ceiling 0.175 U/pulse every 3 min = ~3.5 U/h max, insufficient sustained offset). No automation configuration changes recommended.",
+      "evidence": "aaps_profile.smb_settings: smb_enabled true, uam_enabled true, smb_always_enabled true, smb_with_cob_enabled false, smb_after_carbs_enabled false, smb_with_temp_target_enabled true, smb_with_high_temp_target_enabled false, smb_interval_minutes 3, max_smb_basal_minutes 15, max_uam_smb_basal_minutes 20. representative_loop_statuses: 24 entries showing temp basal rates 0.1–4 U/h (well below max_basal 12 U/h); SMB mentions 'SMB equals 0.2–0.5' across hours 10–17. Aug 13 13:55 loop status: 'UAM Boost 2: 35.93'. therapy_response_windows: 24 bolus events with small SMB boluses 0.05–0.35 U visible in treatment times and glucose outcomes.",
+      "dependencies": "Basal analysis (Stage 3) shows SMB cannot overcome basal insufficiency; basal increase is necessary independent fix. Carb logging (Checkpoint 3 priority) would improve UAM COB estimate and reduce extreme boosts."
+    },
+    {
+      "key": "automation_sensitivity_limits",
+      "status": "completed",
+      "confidence": "high",
+      "findings": "Autosens: disabled (false). ISF is static 56 mg/dL/U; not adapted day-to-day based on glucose pattern history. Appropriate given zero carb logging (carb_treatment_entries=0); Autosens would learn from carb misestimation, introducing false ISF adjustment. Dynamic ISF: enabled (true), adjustment factor 70%. Real-time ISF adjustment active based on glucose trend and rate of change; sensitivity_ratio observations 0.92–1.0 (max 8% reduction observed) indicate modest adjustments. This is prudent given uncertainty from zero carb logging; provides moment-to-moment ISF adjustment without long-term learning bias. autosens_raises_target and autosens_lowers_target both false (Autosens does not adjust target); appropriate, targets should be set and stable. Safety limits (max_basal_u_per_hour 12 U/h, max_iob_units 25 U) not constraining; observed max temp basal ~4 U/h, peak IOB ~5.9 U, both well below ceilings. Carb absorption model: min_5m_carbimpact 8 mg/dL/5 min (standard oref1 default for UAM threshold), meal_max_absorption_hours 7 h (reasonable for extended absorption windows, consistent with observed 3–4 h lunch peaks). UAM active and detecting unannounced meals (loop status UAM boost mentions). Assessment: Sensitivity automation is appropriately configured. Autosens disabled prevents false learning from carb logging gaps; Dynamic ISF enabled provides real-time responsiveness. No changes to sensitivity settings recommended. Midday elevation is not due to automation misconfiguration; it is due to basal insufficiency that automation cannot fully offset.",
+      "evidence": "aaps_profile.smb_settings: autosens_enabled false, dynamic_sensitivity_enabled true, dynamic_isf_adjustment_factor_percent 70, autosens_raises_target false, autosens_lowers_target false, min_5m_carbimpact 8, meal_max_absorption_hours 7. representative_loop_statuses: sensitivity_ratio 0.92–1.0 (Dynamic ISF modest real-time adjustments). Safety limits in aaps_profile: max_basal_u_per_hour 12, max_iob_units 25. therapy_response_windows: 24 bolus events showing SMB and temp basal attempting to manage glucose; outcomes show partial success (lows on some days, sustained highs on others).",
+      "dependencies": "Carb logging implementation would improve UAM certainty and reduce extreme Dynamic ISF adjustments. Basal increase would reduce automation load (less SMB/temp basal needed)."
+    },
+    {
+      "key": "meal_bolus_strategy",
+      "status": "completed",
+      "confidence": "high",
+      "findings": "Declared strategy: none (meal_strategies: [], empty array; no declared prebolus, immediate_bolus_percent, or bolus-splitting strategy). Observed strategy (inferred from therapy response windows, representative treatments, hourly glucose patterns): (1) Pre-bolus: absent. All documented boluses delivered 45–65 min after hourly glucose rise begins (e.g., breakfast hour 08:00 glucose rise → bolus hour 09:00–09:15 at 09:01 timestamp = 61 min post-rise). No pre-meal boluses logged in therapy response windows or representative treatments. (2) Immediate bolus percent: ~100%. Single bolus delivered at once; no documented splitting or delayed portions (all therapy response entries show single bolus timestamp, not multiple staggered entries for one meal). SMB provides supplementary micro-corrections but is not part of meal bolus delivery. (3) Bolus sizing: documented sizes 0.05–0.35 U (breakfast/lunch hours 08:00–16:00), 0.05–0.3 U (dinner/evening). Expected sizes at CR 13.2 g/U for 40–50 g meals: 3.0–3.8 U. Actual sizes are 10–20% of expected. Likely explanations: (a) carbs are smaller (15–25 g, not 40–50 g), (b) meal boluses partially undocumented (therapy windows labeled 'Correction Bolus' may include meal components not captured separately), or (c) CR is weak and smaller boluses are intentional. Cannot validate without carb logging (carb_treatment_entries=0). (4) Meal timing (inferred from hourly glucose patterns): breakfast ~08:00–08:15 (glucose rise begins hour 08), lunch ~12:00–12:30 (glucose rise begins hour 12), dinner ~19:30–20:00 (glucose rise begins hour 20). (5) SMB/UAM active: observed throughout meal absorption window; micro-corrections 0.05–0.35 U every 3 min if glucose > target. UAM boosts 1–35 when unannounced carbs detected (no prior carb entries). (6) E-carbs: zero logged (extended_carb_entries=0, average_extended_carb_duration_min=null). No formal e-carb strategy deployed. However, glucose patterns show 3–4 h lunch peaks (vs. typical 2–3 h), consistent with slow-absorbing carbs (high fat, high fiber, or GLP-1-delayed absorption documented Aug 14, 17, 20), but not formalized as e-carb strategy. Therapy response Aug 15, 11:25 shows triphasic pattern (120m drop 87 → 240m rise 36 → 360m rise 49), evidence of delayed secondary absorption, unaddressed by single-bolus strategy. Assessment: Observed strategy is reactive, post-prandial, undersized, and compensated by SMB/UAM. No pre-bolus = late insulin action relative to carb digestion = hyperglycemia + reactive correction. Undersized boluses + reactive timing = persistent 141–163 mg/dL lunch peaks. SMB/UAM partially compensate but insufficient to prevent %AR 23–32% (poor control during meal window). GLP-1 (Aug 14, 17, 20) correlates with delayed peaks; no e-carb structure deployed.",
+      "evidence": "aaps_profile.analysis_context: meal_strategies [] (empty), strategy_stable_for_period null (no stability declared). therapy_response_windows: Aug 9 09:01 bolus 0.1 U at timestamp 09:01 (61 min post-08:00-hour glucose rise); Aug 13 13:05 bolus 0.2 U (65 min post-12:00 hour rise); Aug 21 12:50 bolus 0.35 U (50 min post-12:00 hour rise). No pre-meal boluses (07:30–08:00 breakfast, 11:30–12:00 lunch) documented. representative_treatments: 40 entries labeled 'Temp Basal' or 'Correction Bolus'; no 'Meal Bolus' entries. telemetry.hourly_glucose_local: hour 08 rise 110→132.9 (22 mg/dL), hour 09 rise 132.9→148 (15 mg/dL); hour 12 rise 141.3, hour 14–16 sustained 148–163; hour 20 rise 105.4→117. carb_treatment_entries 0; extended_carb_entries 0. representative_events: GLP-1 1.25mg Aug 14 08:14, Aug 17 12:03, Aug 20 21:34 (all precede elevated-glucose daily averages 121–135 mg/dL).",
+      "dependencies": "CR validation (Stage 4) depends on carb logging to distinguish bolus sizing from CR weakness. Basal analysis (Stage 3) depends on bolus timing clarity: if pre-bolus were used, basal requirement would shift. Checkpoint 3 meal strategy analysis confirms reactive bolusing pattern and identifies carb logging as critical data gap."
+    },
+    {
+      "key": "meal_ecarbs_absorption",
+      "status": "completed",
+      "confidence": "medium",
+      "findings": "Declared e-carb strategy: none. extended_carb_entries=0; average_extended_carb_duration_min=null. No e-carb entries logged or intentionally used. Observed glucose absorption patterns: breakfast peak 08:00–11:00 local (glucose rises 110→148 mg/dL over 2–3 h post-meal start ~08:00, typical absorption), lunch peak 14:00–16:00 local (glucose rises 141→163 mg/dL over 3–4 h post-meal start ~12:00, delayed vs. typical 2 h), dinner peak 20:00–22:00 local (glucose rises 105→128 mg/dL over 2–3 h post-meal start ~19:30, typical). Delayed lunch peak (3–4 h vs. standard 2 h) indicates slow-absorbing carbs. Correlation with GLP-1 dosing (Aug 14, 17, 20 all document 1.25 mg doses; all precede next-day or same-day elevated-glucose periods with delayed meal peaks) suggests GLP-1-induced gastric slowing. Therapy response window evidence: Aug 15 11:25 bolus 2.4 U (context: GLP-1 Aug 14) shows triphasic glucose pattern: start 181, 60m 127 (−54, strong action), 120m 94 (−87 from start, peak bolus effect), 180m 130 (+36 from 120m, secondary rise), 240m 188 (+58 from start, carbs resuming), 360m 179 (−9 from 240m, leveling). This pattern (drop → recovery → secondary rise) is consistent with meal containing mixed-absorption carbs (fast component peaks ~90 min, slow component peaks 240+ min) or GLP-1-delayed single-carb-type absorption, unintentionally split by bolus kinetics but not formally e-carbed. No formal e-carb structure deployed to manage this pattern; SMB/UAM compensate by delivering micro-corrections during extended absorption window. Hypothesis: lunch contains mixed or slow-absorbing carbs, or GLP-1 is slowing all carbs. No carb logging (carb_treatment_entries=0) prevents meal composition confirmation. Assessment: No formal e-carb strategy in use. Implicit slow-carb effects visible in glucose patterns but not optimized. GLP-1 interaction suggests e-carb consideration once carb logging and meal composition documented.",
+      "evidence": "carb_treatment_entries 0; extended_carb_entries 0; average_extended_carb_duration_min null. therapy_response_windows Aug 15 11:25: bolus 2.4 U, start 181, 60m 127, 120m 94, 180m 130, 240m 188, 360m 179 (triphasic: decline → recovery → secondary rise). telemetry.hourly_glucose_local: hour 14 (13:00–14:00) avg 148.1, hour 15 (14:00–15:00) avg 153.0, hour 16 (15:00–16:00) avg 162.8 (sustained 3–4 h post-presumed 12:00–12:30 lunch). representative_events: GLP-1 Aug 14 08:14 (precedes Aug 15 therapy response Aug 15 11:25 bolus with triphasic pattern), Aug 17 12:03, Aug 20 21:34 (all followed by elevated glucose with delayed peaks within 1–2 days).",
+      "dependencies": "Carb logging (Checkpoint 3 priority) required to identify meal composition and GLP-1 impact on absorption timing. CR validation (Stage 4) must precede e-carb strategy design (distinguish CR weakness from carb misjudgment). Basal increase (primary recommendation) will reduce meal bolus requirement and simplify meal strategy refinement."
+    },
+    {
+      "key": "synthesis_plan",
+      "status": "completed",
+      "confidence": "high",
+      "findings": "Contradiction audit: All CHECKPOINT 1–3 claims validated against aaps_profile, profile_context, decision_inventory, and telemetry. No material contradictions. Key resolutions: (1) Basal 0.7 U/h (10:00–16:00) is too low: supported by hourly glucose consistently 141–162 mg/dL (48–62 above target 100) and SMB insufficient to compensate (max 0.175 U/pulse, weekly average needs +0.2–0.3 U/h). Confidence HIGH. (2) CR 13.2 g/U appears weak or boluses undersized: therapy response Aug 9 shows 0.1 U bolus insufficient for presumed 30 g breakfast (expected 2.3 U). However, carb logging is 0; cannot validate CR definitively. Confidence MEDIUM. Withheld from primary recommendation pending carb documentation. (3) Reactive bolusing without pre-bolus is confirmed pattern: 45–65 min post-meal bolus timing seen across breakfast, lunch, dinner; no pre-meal boluses documented. Confidence HIGH. (4) SMB/UAM and sensitivity automation are functioning correctly: no configuration errors; constraints are profile gaps, not automation defects. Confidence HIGH. (5) GLP-1 interaction (gastric slowing) is plausible: three documented GLP-1 doses correlate with elevated glucose and 3–4 h meal peaks; no alternative explanation found. Confidence MEDIUM. Will resolve with meal documentation. Primary defect: basal 0.7 U/h (10:00–16:00) too low. Secondary defect: CR validation blocked by zero carb logging. Tertiary: reactive bolusing without pre-bolus and no formal e-carb strategy for GLP-1-slowed meals. Safe action order: (1) Increase basal (profile change, single setting, reversible). (2) Implement carb logging (user behavior, non-profile). (3) Validate CR and consider pre-bolus + e-carb structure (requires carb data). Automation changes (SMB/UAM/sensitivity settings) not needed; current configuration is appropriate. No changes to CR, ISF, DIA, target recommended until carb logging enables validation.",
+      "evidence": "Basal analysis (Stage 3): hourly_glucose_local hours 14–16 avg 148–163, %AR 23–32%. daily_glucose Aug 14–15 avg 127–136, %AR 13–20%. aaps_profile.basal_segments show 0.7 U/h for 10:00–16:00 (single continuous segment, no mid-day variation). therapy_response_windows 24 events; SMB boluses 0.05–0.35 U observed (max_smb_basal_minutes 15 = 0.175 U ceiling at 0.7 U/h). CR analysis (Stage 4): therapy_response Aug 9 09:01 bolus 0.1, start 110, 120m 161 (rise 51 despite bolus implies 2+ U unbolused if carbs 30 g at CR 13.2). However, carb_treatment_entries 0; cannot confirm carb amount. Reactive bolusing (Checkpoint 3): therapy_response timestamps show boluses 45–65 min post-hour-of-rise (Aug 9 09:01, Aug 13 13:05, Aug 21 12:50 are 61, 65, 50 min post-meal-hour-start). GLP-1 (representative_events): three entries Aug 14 08:14, Aug 17 12:03, Aug 20 21:34; all precede elevated-glucose daily averages (121–135 mg/dL next day or same day). Automation (Checkpoint 2): SMB activation conditions conservative (cob false, high_temp false); max_smb_basal_minutes 15; max_iob 25 not breached; no safety issues. Safe order: (1) basal change isolated, testable, reversible. (2) carb logging user-driven, non-algorithm. (3) bolus strategy and e-carbs dependent on carb data.",
+      "dependencies": "All CHECKPOINT 1–3 findings carried forward. Basal recommendation independent of CR validation (even if CR 13.2 is correct, basal 0.7 is too low for observed elevation). Carb logging enables next phase (CR validation, pre-bolus timing, e-carb structure). Automation settings require no change; current configuration supports proposed meal strategy improvements.",
+      "data_gaps": "Profile history prior to Aug 7 unknown (cannot assess pre-switch basal stability). Carb entries 0 (CR validation, meal composition, GLP-1 impact all blocked). Meal bolus sizes inferred (therapy response windows may omit partial boluses or show correction-only component). Time-of-day ISF variation unconfirmed (observed range 36–87 mg/dL/U; flat 56 may mask pattern). Pre-Aug 13 basal stability unknown. GLP-1 gastric delay magnitude and duration not quantified."
+    }
+  ],
+  "strengths": [
+    {
+      "area": "CGM coverage and data quality",
+      "finding": "98.7% CGM coverage (3,995 valid entries, 10 gaps <65 min) enables reliable hourly and daily pattern analysis. No data corruption, duplicates, or invalid entries. Telemetry complete: 27 events, 2,315 treatments, 6,214 device statuses."
+    },
+    {
+      "area": "Overnight and dawn control",
+      "finding": "Target 90 mg/dL overnight (00:00–08:00) achieved 88–98% of time (excluding occasional lows Aug 13, 14, 21). Hours 04–07 especially stable (95–98% TIR). Basal 0.6–0.8 U/h in this window is appropriately tuned."
+    },
+    {
+      "area": "Evening glucose control",
+      "finding": "Dinner hour (19:00–22:00) and evening into night (23:00–00:00) stable near target 100 mg/dL (105–128 mg/dL avg, 88–92% TIR). Dinner bolus strategy and basal 0.6–0.7 U/h effective for this meal."
+    },
+    {
+      "area": "Overall time-in-range",
+      "finding": "86% time in range (70–180 mg/dL) and coefficient_of_variation 32.6% are acceptable for closed-loop automated insulin delivery. Majority of glucose readings are controlled."
+    },
+    {
+      "area": "SMB and UAM configuration",
+      "finding": "SMB enabled, UAM enabled, with conservative activation conditions (cob-based SMB disabled, high temp target SMB suppressed). Configuration is safe and appropriate for closed-loop. SMB is actively firing and compensating, albeit insufficient for midday meal coverage."
+    },
+    {
+      "area": "Safety limits not breached",
+      "finding": "Max basal 12 U/h and max IOB 25 U not constraining; peak IOB ~5.9 U observed (well below limit). Automation has room to respond without triggering safety caps."
+    },
+    {
+      "area": "Dynamic ISF and real-time adjustment",
+      "finding": "Dynamic ISF enabled with 70% adjustment factor; sensitivity_ratio 0.92–1.0 observed (modest, appropriate adjustments). Real-time responsiveness to glucose trends active."
+    },
+    {
+      "area": "DIA and IOB kinetics",
+      "finding": "DIA 10 hours appropriate; therapy response windows confirm bolus IOB largely cleared by 360 min. Overnight lows modest despite 1–2 hours IOB from dinner bolus, supporting DIA estimate."
+    }
+  ],
+  "issues": [
+    {
+      "area": "Midday elevation",
+      "finding": "Sustained glucose 141–163 mg/dL (48–62 above target 100) during 10:00–17:00 window (peak hours 14–16). Time above range 7–32% (highest 32% at 16:00). Basal 0.7 U/h (10:00–16:00) too low to suppress endogenous glucose rise + meal carbs."
+    },
+    {
+      "area": "Reactive bolusing without pre-bolus",
+      "finding": "All documented boluses (breakfast, lunch, dinner) delivered 45–65 min post-meal (post-glucose-rise), not pre-bolus. No pre-meal boluses logged. Result: late insulin action relative to carb digestion, contributing to hyperglycemia during meal absorption."
+    },
+    {
+      "area": "Apparent bolus undersizing",
+      "finding": "Therapy response Aug 9: 0.1 U bolus for presumed 30 g breakfast insufficient (glucose rises 51 despite bolus). At CR 13.2 g/U, expected bolus 2.3 U. Documented bolus 10–20% of expected. Cannot validate whether CR is weak or boluses are incompletely logged without carb entries."
+    },
+    {
+      "area": "Hypoglycemia clusters",
+      "finding": "Three clusters on Aug 13 (42 mg/dL), Aug 14 (48→41→41 mg/dL), and Aug 21 (42 mg/dL). Aug 13 cluster preceded by extreme UAM boost (35.93) and followed by profile switch + site change. Aug 14 follows high-variability day. Aug 21 follows sensor change. Risk is post-correction overshoot (reactive boluses + SMB stacking) or profile/site change kinetics altered."
+    },
+    {
+      "area": "GLP-1 interaction unquantified",
+      "finding": "Three documented GLP-1 1.25 mg doses (Aug 14, 17, 20) correlate with elevated-glucose days and 3–4 h meal peaks (vs. typical 2–3 h). Suggests gastric slowing, but no formal e-carb strategy deployed to handle this. Glucose patterns show delayed absorption but not formalized in meal bolus structure."
+    },
+    {
+      "area": "No carb logging",
+      "finding": "Zero carb entries across 14-day period. Prevents CR validation, meal bolus assessment, meal composition understanding, and optimal COB-based SMB calculation. UAM must infer carbs from glucose rise alone (explains extreme UAM boost Aug 13, 35.93)."
+    },
+    {
+      "area": "Afternoon basal 0.5 U/h (16:00–18:00) low",
+      "finding": "Glucose remains elevated 150+ mg/dL at 16:00 (peak 162.8) despite basal drop from 0.7 to 0.5 U/h. Descent to 124 mg/dL by 18:00 suggests post-meal/correction insulin is driving decline, not 0.5 U/h basal. Afternoon basal should be 0.6–0.7 U/h to better support midday-to-evening transition."
+    },
+    {
+      "area": "Profile history unknown",
+      "finding": "Aug 13 21:23 profile switch to 'u200 dilute basal - 16-2u per day FLAT ISF'; profile state prior to Aug 7 unknown. Cannot confirm whether current basal/CR are pre- or post-switch, limiting assessment of basal stability in Aug 7–12 period."
+    },
+    {
+      "area": "No declared meal strategy",
+      "finding": "aaps_profile.analysis_context.meal_strategies = [] (empty). No user-declared prebolus, bolus-splitting, or e-carb strategy. Observed strategy must be inferred entirely from glucose patterns and therapy response outcomes, reducing confidence in interpretation."
+    }
+  ],
+  "recommendations": [
+    {
+      "area": "basal",
+      "title": "Increase basal rate 10:00–16:00 window to address midday elevation",
+      "priority": "high",
+      "description": "Basal 0.7 U/h during 10:00–16:00 (lunch and midday peak window) does not suppress endogenous glucose rise + meal carbs. Hourly glucose averages 141–162 mg/dL (48–62 above target 100) during this window; time above range peaks 32% at 16:00. SMB cannot fully compensate (max bolus ~0.175 U/pulse every 3 min, insufficient to add 0.2–0.3 U/h sustained). Increasing basal from 0.7 to 0.85–0.9 U/h would suppress endogenous glucose output and reduce meal-related hyperglycemia, shifting peak from 163 toward 145 mg/dL (closer to 100 target). Single basal segment change; sequential, testable, reversible. Monitor 3–5 days; if hypoglycemia emerges or glucose becomes over-controlled, revert to 0.7 or choose 0.8 U/h as compromise.",
+      "suggested_change": {
+        "current_segment": "10:00–16:00",
+        "current_rate_u_per_hour": 0.7,
+        "proposed_rate_u_per_hour": 0.85,
+        "rationale": "Sustained midday elevation 141–162 mg/dL; SMB insufficient to compensate. Basal increase shifts burden from reactive bolus/SMB to proactive basal."
+      }
+    },
+    {
+      "area": "basal",
+      "title": "Increase basal rate 16:00–18:00 window (afternoon transition)",
+      "priority": "medium",
+      "description": "Afternoon basal 0.5 U/h (16:00–18:00) is too low. Glucose remains elevated 150+ mg/dL at 16:00 (peak 162.8) and only descends to 124 mg/dL by 18:00 due to post-meal bolus IOB, not basal action. During this window, endogenous glucose output + residual meal carbs require 0.6–0.7 U/h basal to match basal setting in 18:00–19:00 (0.6 U/h) or 19:00–00:00 (0.7 U/h). Increasing to 0.6 U/h would smooth afternoon-to-evening transition and prevent extended high-glucose period. Secondary priority after 10:00–16:00 window change; implement separately after basal 10:00–16:00 validated (3–5 days).",
+      "suggested_change": {
+        "current_segment": "16:00–18:00",
+        "current_rate_u_per_hour": 0.5,
+        "proposed_rate_u_per_hour": 0.6,
+        "rationale": "Afternoon basal 0.5 U/h insufficient to arrest glucose decline from midday peak; glucose remains >150 mg/dL until post-meal bolus IOB clears. Basal increase supports endogenous suppression."
+      }
+    },
+    {
+      "area": "profile",
+      "title": "Implement carb entry logging to enable CR validation and improve meal strategy",
+      "priority": "high",
+      "description": "Zero carb entries logged prevents CR validation, meal bolus assessment, and optimal COB-based SMB. Current SMB fires based on glucose rise alone (UAM); extreme UAM boost (35.93 on Aug 13) reflects high meal carb uncertainty. Logging meals with carb amounts will enable: (1) explicit CR check (logged carbs / bolus size = actual CR); (2) separation of meal bolus from correction bolus; (3) meal composition and GLP-1 gastric effect assessment; (4) reduction of UAM uncertainty and extreme boosts. Start with next meal; log in Nightscout or AAPS using standard format (timestamp, grams, meal description if possible). Not a profile parameter change but essential data input for downstream optimization. Low barrier; high impact.",
+      "suggested_change": {
+        "action": "user_carb_logging",
+        "target": "zero to consistent carb entries per meal",
+        "rationale": "Carb logging unblocks CR validation, meal bolus sizing assessment, and GLP-1 impact quantification. Enables COB-based SMB and reduces automation uncertainty."
+      }
+    },
+    {
+      "area": "meal_strategy",
+      "title": "Consider pre-bolus lead time once carb logging enables validation",
+      "priority": "medium",
+      "description": "Current observed strategy: reactive bolusing 45–65 min post-meal (post-glucose-rise). Result: late insulin action, persistent 141–163 mg/dL peaks during absorption. Pre-bolus (10–15 min before meal) would align insulin onset with carb digestion, reducing peak glucose and hyperglycemia duration. Requires carb logging first to determine optimal bolus size (CR validation). After carb logging is established and CR is confirmed or adjusted, test pre-bolus with one meal (e.g., lunch) and observe glucose response over 3–4 hours. If pre-bolus reduces peak and TIR improves, roll out to other meals. Withhold change until CR is validated.",
+      "suggested_change": {
+        "target": "implement prebolus 10–15 min before meal onset (not reactive post-rise)",
+        "condition": "after CR validation via carb logging",
+        "rationale": "Reactive bolusing delays insulin action; pre-bolus aligns with carb absorption timing, reducing peak glucose and supporting 100 mg/dL target during meal window."
+      }
+    },
+    {
+      "area": "meal_strategy",
+      "title": "Develop e-carb (extended carb absorption) strategy for GLP-1-slowed meals",
+      "priority": "medium",
+      "description": "Three documented GLP-1 1.25 mg doses (Aug 14, 17, 20) correlate with 3–4 h meal peaks (vs. typical 2–3 h). Glucose patterns (therapy response Aug 15: triphasic response 120m drop to 94 → 240m rise to 130 → 360m rise to 179) suggest delayed absorption. No formal e-carb strategy currently deployed (extended_carb_entries 0). Once carb logging is established and meal composition documented (high fat, high fiber, or GLP-1 effect confirmed), test e-carb structure: deliver 50–60% of bolus immediately, reserve 40–50% as e-carb with 90–120 min offset and 120–150 min duration, covering slow-absorbing carb wave. Will reduce SMB/UAM load during extended absorption and improve evening glucose control (currently evening stable, but may improve further). Withhold until carb data clarifies meal composition and GLP-1 impact.",
+      "suggested_change": {
+        "target": "dual-bolus or extended-bolus strategy for GLP-1-slowed meals",
+        "immediate_percent": 50,
+        "extended_carb_offset_minutes": 90,
+        "extended_carb_duration_minutes": 120,
+        "condition": "after carb logging and meal composition documented",
+        "rationale": "GLP-1-delayed absorption creates 3–4 h glucose peaks. E-carb distributes insulin across extended absorption window, reducing SMB/UAM load and supporting target during meal phase."
+      }
+    }
+  ],
+  "profile_recommendation": {
+    "focus": "basal",
+    "decision": "change",
+    "recommendation": "Increase basal rate 10:00–16:00 from 0.7 U/h to 0.85 U/h (or 0.9 U/h if 0.85 insufficient after 3–5 day trial). This single change addresses midday elevation (141–163 mg/dL) by enhancing endogenous glucose suppression and reducing meal-related hyperglycemia. Secondary recommendation: increase basal 16:00–18:00 from 0.5 U/h to 0.6 U/h after primary change validated (separate test period). Do not change CR, ISF, DIA, or target pending carb logging validation.",
+    "rationale": "Midday hourly glucose averages 141–162 mg/dL (48–62 above target 100), with peak 32% time above range at 16:00. Basal 0.7 U/h is insufficient to suppress endogenous glucose output + meal carbs. SMB (max 0.175 U/pulse) cannot fully compensate. Basal increase is profile root fix, not automation patch. Checkpoint 1 Stage 3 analysis (HIGH confidence) identifies 10:00–16:00 basal as likely too low based on sustained elevation despite meal bolus + SMB + temp basal attempts. Therapy response windows confirm bolus IOB declines over 360 min (DIA 10 h); persistent midday elevation indicates basal insufficiency, not IOB calculation error. Afternoon basal 0.5 U/h secondary defect; glucose remains 150+ at 16:00 and only descends when post-meal bolus IOB clears, not due to 0.5 U/h basal.",
+    "confidence": "high",
+    "next_check": "Monitor 10:00–17:00 hourly glucose averages over 5 days after basal increase to 0.85 U/h. Target outcome: reduce 14:00–16:00 peak from current 148–163 mg/dL toward 130–145 mg/dL, and shift %AR (time above range) from current 23–32% toward <15%. If hypoglycemia emerges (new lows at 10:00–17:00 or overnight IOB stacking), reduce to 0.8 U/h or revert to 0.7 U/h and re-assess basal+meal bolus+SMB interaction via carb logging. If insufficient (remains >145 mg/dL at peak), trial increase to 0.9 U/h. Once 10:00–16:00 validated, implement 16:00–18:00 increase from 0.5 to 0.6 U/h in separate 3–5 day trial."
+  },
+  "parameter_decisions": [
+    {
+      "parameter_key": "profile.basal.00_00",
+      "parameter": "Profile / basal 00:00–05:00",
+      "current_value": "0.6 U/h",
+      "suggested_value": "0.6 U/h",
+      "decision": "keep",
+      "rationale": "Overnight basal 0.6 U/h produces avg glucose 90–110 mg/dL (target 90) with 81–99% TIR. Occasional lows (hours 01–02 show 11–18% BR) are modest and likely IOB-related from prior meal boluses, not basal insufficiency. Hours 04–07 excellent (95–98% TIR). Keep 0.6 U/h; evidence does not support change. Dependency: overnight lows may diminish once meal bolus strategy is optimized (pre-bolus reduces overshoot risk)."
+    },
+    {
+      "parameter_key": "profile.basal.05_00",
+      "parameter": "Profile / basal 05:00–06:00",
+      "current_value": "0.7 U/h",
+      "suggested_value": "0.7 U/h",
+      "decision": "keep",
+      "rationale": "Hour 05 avg glucose 99.5 mg/dL (target 90), 97.5% TIR. Hour 06 avg 99.5 mg/dL, 98.7% TIR. Pre-dawn basal appropriately tuned. No change needed."
+    },
+    {
+      "parameter_key": "profile.basal.06_00",
+      "parameter": "Profile / basal 06:00–10:00",
+      "current_value": "0.8 U/h",
+      "suggested_value": "0.8 U/h",
+      "decision": "keep",
+      "rationale": "Hour 07 avg 110.5 mg/dL (slight post-dawn rise), 98.2% TIR. Hour 08 avg 132.9 mg/dL (breakfast effect), 91.1% TIR. Basal 0.8 U/h supports dawn glucose without causing lows. Hour 09 continues high (148 mg/dL) but is meal-related, not basal-related (presumed breakfast consumed 08:00–08:15). Keep 0.8 U/h."
+    },
+    {
+      "parameter_key": "profile.basal.10_00",
+      "parameter": "Profile / basal 10:00–16:00",
+      "current_value": "0.7 U/h",
+      "suggested_value": "0.85 U/h",
+      "decision": "change",
+      "rationale": "Midday basal 0.7 U/h produces sustained elevation 141–162 mg/dL (48–62 above target 100) during hours 10–16 (hourly avg 132–163 mg/dL, %AR 7–32%, peak 32% at hour 16). Basal is insufficient to suppress endogenous glucose rise + meal carbs. SMB active but constrained by max_smb_basal_minutes 15 (bolus ceiling 0.175 U/pulse, insufficient to add 0.2–0.3 U/h sustained during meal). Basal increase from 0.7 to 0.85 U/h (+21%) will enhance endogenous suppression without excessive risk (not exceeding typical 1.0–1.2 U/h midday rates). Candidate trial 0.85 U/h; if insufficient after 5-day observation, escalate to 0.9 U/h. Evidence: daily_glucose Aug 14 avg 127.8 %AR 20.8%, Aug 15 avg 135.9 %AR 13.2%, Aug 18 avg 134.7 %AR 15.3%. Checkpoint 1 Stage 3 HIGH confidence finding. Dependency: carb logging will clarify whether CR component also needs adjustment (secondary to basal)."
+    },
+    {
+      "parameter_key": "profile.basal.16_00",
+      "parameter": "Profile / basal 16:00–18:00",
+      "current_value": "0.5 U/h",
+      "suggested_value": "0.6 U/h",
+      "decision": "change",
+      "rationale": "Afternoon basal 0.5 U/h is too low. Hour 16 peak glucose 162.8 mg/dL (32% AR) persists despite preceding meal bolus + SMB activity. Glucose only descends to 124 mg/dL by hour 18 due to post-meal bolus IOB clearing, not basal action. Endogenous glucose rise + residual meal carbs require 0.6–0.7 U/h basal. Increasing to 0.6 U/h aligns with basal 0.6 U/h (18:00) and 0.7 U/h (19:00) downstream, smoothing afternoon-to-evening transition. Secondary recommendation (implement after basal 10:00–16:00 validated in separate 3–5 day trial). Checkpoint 1 Stage 3 MEDIUM-HIGH confidence finding."
+    },
+    {
+      "parameter_key": "profile.basal.18_00",
+      "parameter": "Profile / basal 18:00–19:00",
+      "current_value": "0.6 U/h",
+      "suggested_value": "0.6 U/h",
+      "decision": "keep",
+      "rationale": "Hour 18 avg 124.2 mg/dL (target 100, +24 but acceptable given post-meal transition). Hour 19 avg 105.4 mg/dL (near target). Basal 0.6 U/h supports this range. Some lows at hour 19 (15% BR on some days) may be post-correction overshoot rather than basal excess. Keep 0.6 U/h; optimize post-meal bolus strategy via carb logging instead."
+    },
+    {
+      "parameter_key": "profile.basal.19_00",
+      "parameter": "Profile / basal 19:00–00:00",
+      "current_value": "0.7 U/h",
+      "suggested_value": "0.7 U/h",
+      "decision": "keep",
+      "rationale": "Evening and overnight basal 0.7 U/h produces avg glucose 105–128 mg/dL (dinner), then descent to 105.7 at hour 23 (near target 90–100). Overall 86–92% TIR. Keep 0.7 U/h; well-tuned for this period."
+    },
+    {
+      "parameter_key": "profile.cr.00_00",
+      "parameter": "Profile / CR 00:00–04:00",
+      "current_value": "13 g/U",
+      "suggested_value": "13 g/U",
+      "decision": "keep",
+      "rationale": "No overnight meals documented; CR 13 g/U rarely tested. Cannot validate without carb logging. Keep current value. Deprioritize; reassess after breakfast/lunch CR validated."
+    },
+    {
+      "parameter_key": "profile.cr.04_00",
+      "parameter": "Profile / CR 04:00–08:00",
+      "current_value": "11.1 g/U",
+      "suggested_value": "11.1 g/U",
+      "decision": "keep",
+      "rationale": "No early-morning meals documented (typical breakfast is 08:00). CR 11.1 g/U rarely tested. Keep current value pending carb logging."
+    },
+    {
+      "parameter_key": "profile.cr.08_00",
+      "parameter": "Profile / CR 08:00–16:00 (breakfast/lunch)",
+      "current_value": "13.2 g/U",
+      "suggested_value": null,
+      "decision": "keep",
+      "rationale": "CR 13.2 g/U appears weak or boluses are under-sized based on therapy response Aug 9 09:01 (bolus 0.1 U insufficient for presumed 30 g breakfast, expected 2.3 U at CR 13.2). However, carb_treatment_entries 0; cannot confirm actual carb amounts, meal bolus sizes (therapy windows may show correction-only component), or whether CR is the defect vs. bolus incompleteness. Checkpoint 1 Stage 4 MEDIUM confidence finding. Keep 13.2 g/U; withhold change pending carb logging. Once carb entries are logged for 3–5 breakfast/lunch meals, calculate actual CR = logged_carbs / bolus_size and compare to 13.2 g/U. If actual CR is significantly weaker (e.g., 15+ g/U), propose reduction to 12 or 11.5 g/U. If actual CR matches 13.2 g/U, keep as-is (boluses were under-sized due to reactive bolusing strategy, not CR weakness). Dependency: basal increase (primary recommendation) will reduce meal bolus requirement; CR validation should follow basal change to avoid confounding."
+    },
+    {
+      "parameter_key": "profile.cr.16_00",
+      "parameter": "Profile / CR 16:00–20:00 (late afternoon/early evening)",
+      "current_value": "10.5 g/U",
+      "suggested_value": "10.5 g/U",
+      "decision": "keep",
+      "rationale": "CR 10.5 g/U (afternoon) and downstream evening CR 12.6 g/U show appropriate sensitivity for evening meals. Dinner (19:00–21:00) glucose stable near target 105–128 mg/dL, suggesting evening CR is validated. Keep 10.5 g/U. Dependency: validate after carb logging enables dinner meal documentation."
+    },
+    {
+      "parameter_key": "profile.cr.20_00",
+      "parameter": "Profile / CR 20:00–00:00 (dinner/evening)",
+      "current_value": "12.6 g/U",
+      "suggested_value": "12.6 g/U",
+      "decision": "keep",
+      "rationale": "Evening CR 12.6 g/U supports stable dinner and overnight glucose. Hour 20–21 (dinner window) avg 117–120 mg/dL, 88–92% TIR. Keep 12.6 g/U; validated by evening glucose performance."
+    },
+    {
+      "parameter_key": "profile.isf.00_00",
+      "parameter": "Profile / ISF 00:00 (flat, all hours)",
+      "current_value": "56 mg/dL/U",
+      "suggested_value": "56 mg/dL/U",
+      "decision": "keep",
+      "rationale": "ISF 56 mg/dL/U (flat, no time-of-day segmentation). Therapy response windows show sensitivity range 36–258 mg/dL/U depending on IOB, meal phase, and context. Flat 56 is plausible average. Midday sensitivity appears weaker (observed ~26–36 mg/dL/U on some boluses during meal phase, weaker than 56), suggesting possible time-of-day variation. However, Checkpoint 1 Stage 4 MEDIUM confidence (observational, not definitive); cannot segment without additional validation. Keep 56 mg/dL/U flat. After carb logging is established and CR is validated, observe correction bolus outcomes (logged carbs + bolus = implied sensitivity) at three time windows (breakfast 08:00–11:00, lunch 12:00–16:00, evening 18:00–23:00) and assess whether segmentation improves TIR. If yes, propose segments (e.g., midday 45–50, evening 60–65 mg/dL/U). Until then, keep flat 56 as reasonable average."
+    },
+    {
+      "parameter_key": "profile.target.00_00",
+      "parameter": "Profile / target 00:00–08:00 (overnight)",
+      "current_value": "90 mg/dL",
+      "suggested_value": "90 mg/dL",
+      "decision": "keep",
+      "rationale": "Overnight target 90 mg/dL achieved 88–98% of time (hours 00–07, excluding occasional lows). Appropriate for sleep and safety."
+    },
+    {
+      "parameter_key": "profile.target.08_00",
+      "parameter": "Profile / target 08:00–23:00 (daytime)",
+      "current_value": "100 mg/dL",
+      "suggested_value": "100 mg/dL",
+      "decision": "keep",
+      "rationale": "Daytime target 100 mg/dL is appropriate. Midday elevation (141–163 mg/dL) is not due to target setting being too high; it is basal/bolus coverage issue. Evening glucose stable near target (105–128 mg/dL). Keep target 100 mg/dL."
+    },
+    {
+      "parameter_key": "profile.target.23_00",
+      "parameter": "Profile / target 23:00–00:00 (overnight transition)",
+      "current_value": "90 mg/dL",
+      "suggested_value": "90 mg/dL",
+      "decision": "keep",
+      "rationale": "Hour 23 avg 105.7 mg/dL with 10.1% BR (occasional lows). Target 90 mg/dL is safe and appropriate; descent from 127.6 (hour 22) to 105.7 (hour 23) is acceptable. Keep 90 mg/dL."
+    },
+    {
+      "parameter_key": "profile.dia",
+      "parameter": "Profile / DIA",
+      "current_value": "10 h",
+      "suggested_value": "10 h",
+      "decision": "keep",
+      "rationale": "DIA 10 hours (flat, no time-of-day segmentation). Therapy response windows show bolus IOB largely cleared by 360 min (~6 hours), consistent with 10-hour DIA. Overnight lows (01:00–02:00) with 1–2 hours residual IOB from dinner bolus are modest (82–88 mg/dL on some days), supporting DIA estimate. Keep 10 h flat."
+    },
+    {
+      "parameter_key": "aaps.core.smb_uam",
+      "parameter": "AAPS / SMB and UAM",
+      "current_value": "smb_enabled=true; uam_enabled=true",
+      "suggested_value": "smb_enabled=true; uam_enabled=true",
+      "decision": "keep",
+      "rationale": "SMB and UAM both enabled; configuration is appropriate for closed-loop automation. SMB is active and firing regularly (24 therapy response windows show SMB boluses 0.05–0.35 U). UAM is detecting unannounced meals (loop status mentions UAM boosts 1–35). Midday elevation persists despite SMB/UAM, but this is due to basal insufficiency (SMB max bolus 0.175 U/pulse cannot overcome 0.2–0.3 U/h basal gap), not SMB/UAM misconfiguration. Keep both enabled. Do not change."
+    },
+    {
+      "parameter_key": "aaps.core.smb_activation",
+      "parameter": "AAPS / SMB activation conditions",
+      "current_value": "smb_always_enabled=true; smb_with_cob_enabled=false; smb_after_carbs_enabled=false; smb_with_temp_target_enabled=true; smb_with_high_temp_target_enabled=false",
+      "suggested_value": "smb_always_enabled=true; smb_with_cob_enabled=false; smb_after_carbs_enabled=false; smb_with_temp_target_enabled=true; smb_with_high_temp_target_enabled=false",
+      "decision": "keep",
+      "rationale": "SMB activation conditions are conservative and appropriate: (1) smb_always_enabled=true: SMB fires whenever glucose > target and IOB permits. Correct for reactive bolusing pattern (no carbs logged, so COB always 0). (2) smb_with_cob_enabled=false: COB-based SMB disabled because carb_treatment_entries=0 (no carb logging). Appropriate; prevents false COB assumptions. (3) smb_after_carbs_enabled=false: Prevents immediate SMB post-carb-entry. Appropriate (no carb entries logged anyway). (4) smb_with_temp_target_enabled=true: SMB active during temp target (recovery targets like 108 mg/dL). Appropriate. (5) smb_with_high_temp_target_enabled=false: SMB suppressed during high temp targets (activity mode 135 mg/dL). Appropriate safety guard. Keep all settings."
+    },
+    {
+      "parameter_key": "aaps.core.smb_delivery",
+      "parameter": "AAPS / SMB strength and frequency",
+      "current_value": "smb_interval_minutes=3 min; max_smb_basal_minutes=15 min; max_uam_smb_basal_minutes=20 min",
+      "suggested_value": "smb_interval_minutes=3 min; max_smb_basal_minutes=15 min; max_uam_smb_basal_minutes=20 min",
+      "decision": "keep",
+      "rationale": "SMB strength and frequency settings are appropriate: (1) smb_interval_minutes=3: Aggressive but standard for oref1; SMB can fire every 3 min if glucose > target and IOB permits. Observed behavior shows SMB 0.05–0.35 U boluses; consistent with 3-min interval. (2) max_smb_basal_minutes=15: SMB bolus ceiling ~0.175 U/pulse at 0.7 U/h basal (15 min of basal). Over 1 hour with 20 SMB attempts, max delivery ~3.5 U/h, insufficient to overcome 0.2–0.3 U/h basal gap. This is a basal insufficiency problem, not SMB ceiling problem; increasing SMB ceiling would not solve root issue and risks IOB over-accumulation. (3) max_uam_smb_basal_minutes=20: UAM SMB ceiling ~0.233 U (20 min of 0.7 U/h basal). Appropriate; extends UAM to respond faster to unannounced carbs. Keep all settings. Basal increase (primary recommendation) will reduce SMB load (less micro-correction needed), naturally validating SMB strength settings."
+    },
+    {
+      "parameter_key": "aaps.core.safety_limits",
+      "parameter": "AAPS / max basal and max IOB limits",
+      "current_value": "max_basal_u_per_hour=12 U/h; max_iob_units=25 U",
+      "suggested_value": "max_basal_u_per_hour=12 U/h; max_iob_units=25 U",
+      "decision": "keep",
+      "rationale": "Safety limits are permissive and appropriate: (1) max_basal_u_per_hour=12 U/h: High ceiling relative to profile basal (0.5–0.8 U/h). Observed temp basal 0.1–4 U/h well below limit. Not constraining. (2) max_iob_units=25 U: High ceiling. Peak IOB observed ~5.9 U; typical ~0.1–3 U. Not breaching limit. Both limits support aggressive automation without safety constraints. Keep both."
+    },
+    {
+      "parameter_key": "aaps.core.sensitivity",
+      "parameter": "AAPS / Autosens and Dynamic ISF",
+      "current_value": "autosens_enabled=false; dynamic_sensitivity_enabled=true; autosens_raises_target=false; autosens_lowers_target=false; dynamic_isf_adjustment_factor_percent=70 %",
+      "suggested_value": "autosens_enabled=false; dynamic_sensitivity_enabled=true; autosens_raises_target=false; autosens_lowers_target=false; dynamic_isf_adjustment_factor_percent=70 %",
+      "decision": "keep",
+      "rationale": "Sensitivity settings are appropriate: (1) autosens_enabled=false: Autosens disabled; ISF static 56 mg/dL/U (no day-to-day learning). Appropriate because carb_treatment_entries=0 (no carb logging); Autosens would learn from carb misestimation, leading to false ISF adjustment. Keep disabled. (2) dynamic_sensitivity_enabled=true: Real-time ISF adjustment based on glucose trend and delta. Active and responsive (sensitivity_ratio 0.92–1.0 observed, modest adjustments). Appropriate given zero carb logging; provides moment-to-moment ISF adjustment without long-term learning bias. Keep enabled. (3) autosens_raises_target=false; autosens_lowers_target=false: Both false (Autosens does not adjust target). Appropriate; targets are set and should not drift. Keep both false. (4) dynamic_isf_adjustment_factor_percent=70: Max 70% adjustment to ISF scale. Conservative and appropriate. Keep 70%. Note: once carb logging is implemented, can reassess whether Autosens should be enabled to capture day-to-day CR/ISF patterns. For now, keep current settings."
+    },
+    {
+      "parameter_key": "aaps.core.carb_absorption",
+      "parameter": "AAPS / carbohydrate absorption model",
+      "current_value": "min_5m_carbimpact=8 mg/dL/5 min; meal_max_absorption_hours=7 h",
+      "suggested_value": "min_5m_carbimpact=8 mg/dL/5 min; meal_max_absorption_hours=7 h",
+      "decision": "keep",
+      "rationale": "Carb absorption model settings are appropriate: (1) min_5m_carbimpact=8 mg/dL/5 min: Standard oref1 default for UAM threshold. UAM is triggering (loop statuses show UAM boosts 1–35), indicating unannounced meal detection is active. Setting is reasonable for zero-carb-entry scenario. (2) meal_max_absorption_hours=7 h: Reasonable upper bound for carb absorption. Observed lunch peaks 3–4 h post-meal (vs. typical 2–3 h), consistent with slow absorption or GLP-1 delay; 7 h max allows AAPS to model extended absorption if carbs are logged with extended duration. Keep both settings. Once carb logging is implemented, can refine min_5m_carbimpact if UAM boosts remain extreme; 8 mg/dL/5 min may be too high for slow-absorbing meals (GLP-1-delayed), causing UAM to miss early carbs. Can trial reduction to 5–6 mg/dL/5 min if needed."
+    }
+  ],
+  "meal_strategy_summary": {
+    "suggestion": "Implement carb entry logging immediately to enable CR validation and meal strategy refinement. Current observed strategy is reactive bolusing (45–65 min post-meal, no pre-bolus) with single-bolus delivery (~100% immediate, no splitting or extended portion). This strategy is undersized relative to meal carb amounts and results in sustained midday elevation (141–163 mg/dL peak at 14:00–16:00, 3–4 h post-meal). Once carb logging establishes baseline for 3–5 meals (breakfast, lunch, dinner), calculate actual CR (logged carbs / bolus size) and compare to profile 13.2 g/U (breakfast/lunch) and 10.5–12.6 g/U (evening). If CR validation confirms 13.2 g/U is weak, propose reduction to 12 or 11.5 g/U. If CR is confirmed correct, focus on pre-bolus timing: implement 10–15 min lead time before breakfast and lunch (not reactive post-rise), aligning insulin onset with carb digestion. This shifts peak glucose from 3–4 h post-meal to 2–3 h (closer to insulin action window). For meals with delayed absorption (GLP-1-documented Aug 14, 17, 20, or high-fat/high-fiber composition confirmed by carb logging), trial e-carb structure: deliver 50–60% of bolus immediately, reserve 40–50% as extended carb with 90–120 min offset and 120–150 min duration. This distributes insulin across extended absorption window, reducing SMB/UAM load and supporting target throughout meal phase. Do not change SMB/UAM or sensitivity automation; current configuration is appropriate and will benefit from basal increase (primary recommendation) reducing meal bolus requirement. Sequential order: (1) Implement basal increase 10:00–16:00 (0.7 → 0.85 U/h) and validate 3–5 days. (2) Start carb logging for every meal (same 3–5 day period or parallel). (3) Calculate actual CR and assess pre-bolus feasibility (requires CR confidence ≥medium). (4) Trial pre-bolus 10–15 min before lunch (single meal, 3 days), then breakfast if successful. (5) Document meal composition (simple, complex, high-fat, etc.) to identify GLP-1 or slow-absorb meals. (6) Trial e-carb structure for slow-absorb meals (meal #4–5 in logging sequence).",
+    "rationale": "Current reactive strategy without pre-bolus results in 141–163 mg/dL midday peaks (48–62 above target 100) and 68–92% TIR during meal window (poor during 15:00–16:00 at 68% TIR, 32% AR). Carb logging is critical data gap preventing CR validation and meal composition understanding (meal size, fat/fiber content, GLP-1 impact). Three documented GLP-1 doses correlate with 3–4 h meal peaks (vs. typical 2–3 h), suggesting delayed absorption unaddressed by current single-bolus reactive strategy. Therapy response Aug 15 11:25 shows triphasic pattern (drop → recovery → secondary rise) consistent with delayed/mixed-absorption carbs. Pre-bolus + potential CR adjustment + e-carb structure will align insulin action with carb absorption, reducing peak glucose and improving TIR during meal window. Basal increase (primary recommendation) will synergistically reduce meal bolus requirement, simplifying meal strategy refinement. All recommendations are contingent on carb logging to confirm or refute hypotheses.",
+    "confidence": "medium",
+    "next_observation": "Implement carb entry logging for next 3–5 meals (all meals, all days) with timestamp, gram amount, and meal description (breakfast, lunch, dinner, snack). Calculate actual CR = logged_carbs / bolus_size for each meal. If CR varies >1 g/U between breakfast and lunch (e.g., 13.2 vs. 12.0), identify which meal type (breakfast, lunch) drives difference and reason (meal size, composition, timing). If CR is consistent within ±0.5 g/U of profile 13.2 g/U, CR is validated and pre-bolus timing becomes next focus. Simultaneously document meal composition for slow-absorb meals: note high fat, high fiber, or GLP-1-related delays (peak >3 h post-meal). This will enable e-carb strategy design.",
+    "exceptions": [
+      {
+        "pattern": "Large post-hyperglycemia bolus (Aug 15, 11:25: 2.4 U at glucose 181 mg/dL)",
+        "context": "Context: GLP-1 1.25 mg Aug 14 08:14; carryover hyperglycemia into Aug 15 morning. This is not a standard daily meal bolus but a deliberate larger correction bolus to manage cumulative elevation.",
+        "suggestion": "Document this as exception (not typical strategy). If GLP-1 doses consistently cause next-day elevation and carryover bolus, consider timing GLP-1 doses to avoid peak insulin action collision (e.g., give GLP-1 in evening, not morning, to delay onset until next-day breakfast is bolused). After carb logging, assess whether carryover bolus is avoidable via pre-bolus timing on GLP-1 administration day."
+      },
+      {
+        "pattern": "Extreme UAM boost and cascading lows (Aug 13: UAM Boost 2=35.93 at 13:55 UTC; glucose 42 mg/dL at 17:14)",
+        "context": "Context: Aug 13 profile switch (21:23) and site change (21:45) followed by 4-hour low. Extreme UAM boost reflects high uncertainty about meal carb amount (algorithm applying maximum allowed SMB). Profile/site changes altered insulin kinetics, contributing to subsequent low.",
+        "suggestion": "Aug 13 is an outlier day; do not use as template for routine strategy. This pattern (extreme UAM boost → low glucose) indicates carb under-estimation triggering maximum automation response, followed by profile/site change causing kinetics shift. Prevention: implement carb logging to provide explicit carb amounts (reduces UAM uncertainty and extreme boosts). Avoid profile/site changes on high-variability days (wait 1–2 days after baseline re-established)."
+      }
+    ]
+  },
+  "implementation_steps": [
+    {
+      "step": 1,
+      "title": "Verify current basal 10:00–16:00 behavior before change",
+      "action": "Review CGM and AAPS logs for one typical day (Aug 16–20, excluding Aug 18 high-variability day). Confirm midday glucose trend 10:00–16:00: expected avg >140 mg/dL and %AR >20% as documented. Baseline 0.7 U/h basal behavior must be clear before increase.",
+      "duration": "1 day (review only; no setting change)",
+      "monitoring": "Document hourly glucose 10:00–16:00 (screenshot or CGM export). Note meal timing (if visible in AAPS) and temp basal rates enacted."
+    },
+    {
+      "step": 2,
+      "title": "Increase basal 10:00–16:00 from 0.7 to 0.85 U/h",
+      "action": "In AAPS profile editor, locate basal segment 10:00–16:00. Change rate from 0.7 U/h to 0.85 U/h. Save profile. Verify profile updated and active in AAPS UI. Do not change any other basal segments or profile parameters.",
+      "duration": "5 minutes (edit + save)",
+      "monitoring": "Confirm in AAPS that profile 10:00–16:00 basal now shows 0.85 U/h. Check loop status logs for next loop cycle (~5 min) to see suggested temp basal rates reflect new profile."
+    },
+    {
+      "step": 3,
+      "title": "Monitor glucose response to basal increase (3–5 days)",
+      "action": "Observe hourly glucose 10:00–16:00 for 3–5 days post-basal-change. Track: (a) midday glucose average (target shift from 150+ to 130–145 mg/dL). (b) Time above range %AR during 14:00–16:00 peak window (target shift from 23–32% to <15%). (c) Any new lows (target: no hypoglycemia 10:00–16:00; if lows appear, revert to 0.7 U/h). (d) Post-meal bolus IOB and SMB frequency (expected: SMB micro-corrections may decrease if glucose peaks are suppressed).",
+      "duration": "3–5 days",
+      "monitoring": "Use AAPS Reports or Nightscout-compatible glucose viewer to extract daily glucose averages and %AR for each 10:00–16:00 window. Compare to baseline (Aug 14 avg 127.8, %AR 20.8%; Aug 15 avg 135.9, %AR 13.2%; Aug 18 avg 134.7, %AR 15.3%). Target: reduce peak hour 16 from 162.8 mg/dL toward 145–150 mg/dL. If achieved, proceed to step 4. If insufficient (remains >150 mg/dL average), escalate to 0.9 U/h (repeat steps 2–3 with 0.9 U/h). If hypoglycemia emerges, revert to 0.7 U/h and re-assess meal bolus sizing (may indicate need for carb logging + CR validation before second basal change)."
+    },
+    {
+      "step": 4,
+      "title": "Implement carb entry logging (parallel to basal monitoring or immediately after)",
+      "action": "Starting next meal, log every meal and snack in Nightscout carb entry (or AAPS equivalent). For each entry: (a) timestamp of meal start (or best estimate). (b) Total grams of carbohydrate (estimate if exact unknown; note unit). (c) Meal description (breakfast, lunch, dinner, snack) and brief composition note if possible (e.g., 'oatmeal + fruit', 'sandwich + chips', 'pasta with meat').",
+      "duration": "Ongoing; minimum 3–5 meals to establish pattern",
+      "monitoring": "In Nightscout or AAPS, confirm carb entries appear in timeline and COB calculation starts (should see COB > 0 after entry). Loop status should show 'COB: #' instead of 'COB: 0'. If carb logging is correct, UAM boosts (if any) should decrease because COB provides explicit meal carb data."
+    },
+    {
+      "step": 5,
+      "title": "Validate carb ratio (CR) after 3–5 carb-logged meals",
+      "action": "For each logged meal, calculate implied CR: CR_actual = logged_carbs_grams / bolus_size_units. Create simple table: | Meal | Date | Logged Carbs (g) | Bolus (U) | Implied CR (g/U) | Profile CR (g/U) | Δ |. Average implied CR across meals. Compare to profile CR (13.2 g/U for breakfast/lunch, 10.5–12.6 g/U for dinner). If average implied CR differs >1 g/U from profile, CR adjustment candidate (weaker profile CR = larger actual carbs / smaller bolus than expected; stronger profile CR = smaller actual carbs / larger bolus). If within ±0.5 g/U, CR is validated and next focus is bolus timing.",
+      "duration": "1 day (review + calculation)",
+      "monitoring": "CR validation should resolve one of two hypotheses: (1) CR is correct and boluses were under-sized (reactive bolusing pattern is fault, not CR). (2) CR is weak and needs reduction (profile change secondary to carb logging). Action: if (1), proceed to step 6 (pre-bolus timing). If (2), hold pre-bolus and propose CR change to care team; implement separately after validation."
+    },
+    {
+      "step": 6,
+      "title": "Trial pre-bolus timing (10–15 min before meal) for lunch (single meal, 3 days)",
+      "action": "For three consecutive lunches, deliver meal bolus 10–15 min **before** eating (not post-glucose-rise). Estimate bolus size using validated CR: bolus_units = estimated_carbs_grams / validated_CR. Deliver bolus, then eat meal 10–15 min later. Observe glucose response 60–240 min post-bolus: measure (a) time to peak glucose (target: 120–180 min, earlier than current 180–240 min). (b) peak glucose value (target: 30–50 mg/dL above 100, vs. current 48–63 above). (c) glucose stability post-peak (target: sustained descent back toward 100, not re-rise).",
+      "duration": "3 days",
+      "monitoring": "Use CGM data to track glucose curve 60–240 min post-bolus for each trial lunch. Compare to baseline reactive-bolus lunches (Aug 14–20 lunch periods). If peak glucose shifts lower (e.g., 150 → 140 mg/dL) or arrives earlier (2 h vs. 3–4 h), pre-bolus is effective; proceed to step 7 (extend to breakfast). If peak unchanged or glucose drops too low (hypo risk), revert to reactive bolusing and reassess bolus size or meal composition."
+    },
+    {
+      "step": 7,
+      "title": "Extend pre-bolus to breakfast (and other meals if lunch successful)",
+      "action": "If lunch pre-bolus trial (step 6) shows glucose improvement, implement pre-bolus for breakfast (same 10–15 min lead time). Continue lunch pre-bolus. After 3 days, evaluate breakfast response (similar metrics: time to peak, peak glucose, stability). If successful, extend to dinner (if not already stable). Maintain pre-bolus lead time 10–15 min for all meals.",
+      "duration": "3 days per meal (breakfast)",
+      "monitoring": "Track breakfast glucose 08:00–11:00 (target: shift peak from 148 mg/dL toward 130–140 mg/dL, arrive at 09:00–10:00 vs. current 09:00–11:00). Ensure no new hypoglycemia. If breakfast pre-bolus is effective and dinner remains stable (no change needed), consolidate routine: pre-bolus all meals 10–15 min lead time."
+    },
+    {
+      "step": 8,
+      "title": "Document meal composition (slow-absorb assessment) during carb logging",
+      "action": "During steps 4–7, note meal composition for any meal with delayed glucose peak (>3 h post-meal or second rise 240–360 min post-bolus). Record: high fat (e.g., fried food, cream sauce), high fiber (e.g., vegetables, whole grain), or documented GLP-1 dose timing. Flag as 'slow-absorb meal candidate'. After 2–3 slow-absorb meals identified, assess pattern: are lows occurring after GLP-1 doses? Are slow peaks consistent or sporadic?",
+      "duration": "Ongoing during steps 4–7",
+      "monitoring": "Identify 1–2 recurring slow-absorb meal patterns (e.g., 'Tuesday lunch = pasta = 3.5 h peak' or 'meals after GLP-1 = delayed absorption'). Document for step 9."
+    },
+    {
+      "step": 9,
+      "title": "Trial e-carb (extended carb absorption) structure for slow-absorb meals (optional, after steps 1–8 stable)",
+      "action": "For identified slow-absorb meal (step 8), trial dual-bolus or extended-bolus structure: (a) Calculate total meal bolus = carbs / validated_CR. (b) Deliver 50% as immediate bolus, 50% as extended carb with 90–120 min offset and 120–150 min duration. Example: 50 g lunch at CR 12 g/U = 4.2 U total. Deliver 2.1 U immediately (10–15 min before meal), then set e-carb entry for 2.1 U with 90 min offset and 120 min absorption duration (peaks at 150–210 min post-meal). Observe glucose response 60–360 min post-initial-bolus: target is flattened peak (avoid 3–4 h sustained high), stable intermediate glucose (100–130 mg/dL) during extended absorption window, and return to target post-meal.",
+      "duration": "3 days per slow-absorb meal (once per week if identified meal pattern is weekly)",
+      "monitoring": "Compare e-carb lunch glucose to reactive-bolus baseline lunch (Aug 14–20). Metrics: (1) peak glucose at 90–120 min (should be lower if e-carb reduces initial spike). (2) glucose at 150–210 min (should remain 110–140 mg/dL, not re-rise to 160+). (3) SMB frequency during 90–240 min (should decrease if peak is flattened). If e-carb improves TIR and reduces SMB load, adopt for slow-absorb meals. If glucose control worsens (e.g., mid-meal low due to early bolus + extended carb mismatch), revert to single bolus and re-assess meal composition or bolus timing."
+    },
+    {
+      "step": 10,
+      "title": "Implement basal 16:00–18:00 increase (0.5 → 0.6 U/h) after basal 10:00–16:00 validated (separate test, days 6–10)",
+      "action": "Once basal 10:00–16:00 increase (step 2–3) is confirmed effective and glucose at 14:00–16:00 improved, increase basal 16:00–18:00 from 0.5 to 0.6 U/h. Follow same process as step 2: edit profile, save, verify. Monitor afternoon glucose 16:00–18:00 for 3–5 days (target: glucose descent from peak toward 130–140 mg/dL by 18:00, not plateauing >150).",
+      "duration": "5 minutes (edit) + 3–5 days (monitor)",
+      "monitoring": "Confirm hour 16 glucose trend (should be declining if 0.6 U/h basal supports descent better than 0.5 U/h). Confirm no new lows 16:00–18:00 (should remain safe). If successful, basal structure is complete."
+    },
+    {
+      "step": 11,
+      "title": "Review summary and communicate changes to care team",
+      "action": "After steps 1–10 (approximately 2–3 weeks), compile summary: (1) Basal changes made (0.7 → 0.85 U/h for 10:00–16:00; 0.5 → 0.6 U/h for 16:00–18:00) and glucose outcomes (% change in midday TIR, peak glucose shift). (2) Carb logging implemented; CR validated or adjusted. (3) Pre-bolus timing adopted; bolus lead time 10–15 min. (4) E-carb structure trialed (if applicable); slow-absorb meals identified and optimized. (5) No SMB/UAM/sensitivity settings changed (remain appropriate). Communicate outcomes to diabetes care team: glucose logs, TIR improvement, any hypoglycemia events, and confirm continued monitoring plan.",
+      "duration": "1 day (documentation) + team communication",
+      "monitoring": "Care team review and approval of changes. If improvements sustained (TIR >90% daytime, midday peak <145 mg/dL), confirm new profile as stable. If gaps remain, discuss next phase (e.g., additional CR segmentation, ISF time-of-day variation, GLP-1 optimization)."
+    }
+  ],
+  "education": [
+    {
+      "topic": "Why basal is primary, not automation",
+      "explanation": "Automation (SMB, UAM) is designed to fine-tune and react within the baseline set by basal rates. If basal is too low, automation must work harder and cannot fully compensate. SMB bolus ceiling is limited to ~0.175 U/pulse (15 min of 0.7 U/h basal); even at 3-min intervals (20 pulses/hour), SMB adds ~3.5 U/h maximum. If meal carbs require +0.2–0.3 U/h sustained basal increase, SMB + temp basal together must provide this, leaving no margin for other glucose sources (endogenous, stress, activity). Basal increase removes this constraint: basal 0.85 U/h provides endogenous suppression directly, freeing SMB for true meal carb response. This is why changing basal first (single, sequential change) is safer than trying to compensate via SMB/automation tuning."
+    },
+    {
+      "topic": "Reactive vs. pre-bolus bolusing",
+      "explanation": "Reactive bolusing (current pattern): meal consumed → glucose rises 30–60 min → bolus delivered post-rise. Insulin onset 10–20 min after bolus; peak action 60–90 min post-bolus (90–150 min post-meal). By this time, meal carbs are already spiking and past initial digestion peak. Result: glucose climbs 30–50 mg/dL before insulin fully acts; requires correction bolus or SMB to arrest rise. Pre-bolus (10–15 min before eating): bolus delivered → meal consumed 10–15 min later → glucose begins rising as insulin onset begins (same timing, but insulin is ready). Insulin peak action (60–90 min post-bolus) coincides with carb absorption peak (90–120 min post-meal), matching action to need. Result: glucose controlled throughout absorption; peak reduced by 20–30 mg/dL. Pre-bolus requires carb logging (knowing meal size in advance) to size bolus correctly."
+    },
+    {
+      "topic": "E-carbs (extended carb absorption) and GLP-1 interaction",
+      "explanation": "Standard meals: carbs absorbed over 2–3 hours (peak at 60–90 min post-meal). Insulin action peaks 60–90 min post-bolus (DIA 10 h means 3–5 hours of significant action remaining). Pre-bolus aligns insulin peak with carb absorption peak; both clear ~3 hours post-meal. However, meals with high fat, high fiber, or GLP-1-delayed gastric emptying absorb over 3–4 hours (peak 120–180 min post-meal or later, second rise 240–360 min). Single bolus cannot cover both waves efficiently. E-carb solution: split total carb into two portions: (1) Immediate bolus: 50–70% delivered 10–15 min before meal (covers fast carbs from first 1–2 hours). (2) Extended carb: 30–50% entered as e-carb with 90–120 min offset (starts absorption 90–120 min after meal, durations 120–150 min, covers slow carbs from hours 2–4). Result: two waves of insulin match two waves of carb absorption. GLP-1 slows gastric emptying → longer absorption window → e-carb becomes more effective. Three documented GLP-1 doses (Aug 14, 17, 20) correlate with 3–4 h peaks; e-carb structure would address this if meal composition (high fat/fiber) is confirmed via carb logging."
+    },
+    {
+      "topic": "Carb ratio (CR) validation and sensitivity (ISF)",
+      "explanation": "CR: grams of carb per 1 unit insulin (e.g., CR 13 g/U means 13 g carbs ÷ 13 U insulin = 1 U insulin per 13 g carbs). ISF: mg/dL glucose drop per 1 unit insulin (e.g., ISF 56 mg/dL/U means 1 U insulin ÷ 56 mg/dL = 56 mg/dL glucose drop per 1 U). Profile shows CR 13.2 g/U (breakfast/lunch) and ISF 56 mg/dL/U. Therapy response Aug 9: bolus 0.1 U for presumed 30 g breakfast. Expected: 30 g ÷ 13.2 g/U = 2.27 U. Actual 0.1 U is 4.5% of expected—either meal is much smaller (3 g, not 30 g) or bolus is missing (full 2 U bolus not logged). Carb logging resolves this: if user logs '30 g', then 0.1 U bolus in therapy window is incomplete (missing ~2 U) or CR is weak (actual CR is 30 g ÷ 0.1 U = 300 g/U, unrealistic). Carb logging also enables ISF validation: if 0.2 U correction bolus at glucose 165 mg/dL produces 120-min drop to 140 (−25 mg/dL), implied ISF is 25 ÷ 0.2 = 125 mg/dL/U (very weak, vs. profile 56). Discrepancies point to either (a) carbs not logged completely, (b) boluses not logged completely, or (c) profile settings are wrong. Carb logging + bolus documentation together resolve ambiguity."
+    },
+    {
+      "topic": "Safe sequential change order and monitoring",
+      "explanation": "Recommendation order (basal → carb logging → pre-bolus → e-carb) is designed for safety and clarity: (1) Basal increase alone (step 2–3) is reversible (revert if hypoglycemia). Single isolated change makes glucose impact clear. (2) Carb logging (step 4) is user behavior, not algorithm change; no direct glucose effect, but provides data for next decisions. (3) Pre-bolus (step 6) depends on carb logging (need bolus size estimate). Separated by 3–5 days after carb logging starts, allowing trend observation. (4) E-carb (step 9) depends on both carb logging (meal composition) and pre-bolus validation (bolus timing baseline). Do not combine steps (e.g., do not change basal AND introduce pre-bolus on same day): overlapping changes mask causation. If glucose improves but you've changed two things, you won't know which one helped. If glucose worsens, you won't know which to revert. Sequential changes enable troubleshooting."
+    },
+    {
+      "topic": "Time-in-range (TIR) metrics and what to monitor",
+      "explanation": "TIR is % of time glucose is within target range (70–180 mg/dL, or for this user: 90–100 mg/dL daytime, 90 mg/dL overnight). Higher TIR = better control. Current: overall 86% TIR is acceptable (range-dependent; <70% poor, 70–90% fair, 90–100% excellent). Midday TIR is weak: hours 14–16 show 68–75% TIR (100–130 mg/dL target; 32% above range). Breakfast and dinner TIR are good (91–92%). Basal increase target: shift midday hours 14–16 from 68–75% to >85% TIR (i.e., reduce %AR from 23–32% to <15%). Monitoring: after basal change, check daily glucose reports for 10:00–16:00 average (should drop from 141–163 mg/dL toward 130–145 mg/dL) and %AR (should drop from 23–32% toward <15%). This is primary metric; do not focus on overall TIR (which remains 86%+) but on daytime peak window TIR (which improves)."
+    }
+  ],
+  "safety_notes": [
+    {
+      "category": "Decision-support boundary",
+      "note": "This analysis is decision-support content only. The user must independently verify every proposed change, consult with their healthcare provider (endocrinologist, diabetes educator, AAPS developer community), make changes one at a time, and monitor glucose closely. Do not assume recommendations are medical directives; they are suggestions for discussion with the care team."
+    },
+    {
+      "category": "Sequential change requirement",
+      "note": "Implement changes one at a time, not simultaneously. Basal increase (step 2) must be validated 3–5 days before pre-bolus timing change (step 6). Carb logging (step 4) can run in parallel with basal monitoring but must be established before CR validation (step 5) and pre-bolus calculation (step 6). If two or more changes are made together, glucose improvement or deterioration cannot be attributed to a single cause, complicating troubleshooting."
+    },
+    {
+      "category": "Hypoglycemia risk during basal increase",
+      "note": "Basal increase from 0.7 to 0.85 U/h (+21%) increases endogenous suppression and carries small risk of hypoglycemia during periods without meal carbs (e.g., early morning 10:00 if no breakfast consumed, or post-lunch afternoon if meal delayed). Monitor 10:00–16:00 glucose closely first 3 days post-increase. If new lows appear (glucose <70 mg/dL, especially repeated), revert to 0.7 U/h immediately and contact care team. If isolated low, assess context: was meal delayed or smaller than expected? If so, may be safe to continue with heightened monitoring. Do not drive or operate machinery if hypoglycemic; always treat low with 15 g fast carbs and recheck 15 min."
+    },
+    {
+      "category": "Carb logging accuracy",
+      "note": "Carb logging estimates are acceptable for initial CR validation; exact grams are not required. Standard estimates: breakfast cereal ~30 g, toast ~15 g, fruit ~15 g, lunch sandwich ~40 g, dinner pasta/rice ~50 g, vegetable <5 g. If unsure, estimate and note as approximate (e.g., '~40 g'). Care team can help refine estimates. Inaccurate carb logging will confound CR validation; systematic overestimation (e.g., all meals logged as +10 g high) will shift implied CR weaker; underestimation will shift stronger. If implied CR (step 5) differs >2 g/U from profile, investigate carb estimation consistency first before proposing profile change."
+    },
+    {
+      "category": "Pre-bolus timing and meal coordination",
+      "note": "Pre-bolus requires 10–15 min discipline: bolus must be delivered, then meal eaten within 5–20 min (not hours later). If meal is delayed >30 min after bolus, insulin will peak before carbs arrive, risking low glucose during bolus action window (60–90 min post-bolus). If meal is eaten <5 min after bolus, carbs and insulin may desynchronize (carbs peak at 90 min, but insulin is starting to clear). If meal timing is unpredictable (highly variable schedule, grazing rather than discrete meals), reactive bolusing (current strategy) may be more practical than pre-bolus. Discuss meal timing consistency with care team before committing to pre-bolus."
+    },
+    {
+      "category": "E-carb and extended bolus caution",
+      "note": "E-carbs (extended carb absorption in AAPS terminology) are not the same as pump-delivered extended bolus (basal insulin over time). AAPS e-carbs tell the algorithm that carbs are absorbing over an extended window (e.g., 120 min), and the algorithm calculates COB (carbs on board) and adjusts SMB/basal accordingly. The actual insulin delivery remains as bolus + basal + SMB (not extended insulin delivery). Do not confuse the two. E-carbs are meal composition annotations, not bolus delivery modes. If using a pump with extended bolus capability (e.g., Medtronic, Tandem), extended bolus is a separate feature; consult pump manual and care team for coordination with AAPS e-carbs."
+    },
+    {
+      "category": "GLP-1 and hypoglycemia risk",
+      "note": "GLP-1 medications (three documented doses, Aug 14/17/20) delay gastric emptying, slowing carb absorption and creating 3–4 h peaks (vs. typical 2–3 h). This increases risk of post-correction overshoot if reactive boluses are stacked (reactive bolus + SMB/basal post-GLP-1-delayed carb rise, then sudden carb absorption stops). Symptoms: glucose 160+ → correction bolus delivered → 2 hours later, residual bolus IOB + sudden meal carb dropout = low glucose. Mitigation: (1) avoid large reactive corrections post-GLP-1; (2) use e-carb structure (extended absorption window) to match delayed carbs; (3) document GLP-1 timing and assess meal absorption lag on days GLP-1 dosed. If hypoglycemia occurs post-GLP-1, alert care team; may need GLP-1 timing adjustment or basal/CR reduction on those days."
+    },
+    {
+      "category": "Profile switch Aug 13 context",
+      "note": "Aug 13 profile change to 'u200 dilute basal' + site change 21:45 preceded hypoglycemia cluster (42 mg/dL at 17:14, same day). Profile change reason unknown (clinical decision, experimentation, or error). Aug 7–12 profile state unknown. Current analysis assumes profile active Aug 7–21 is consistent, but Aug 13 switch may have altered basal/CR/ISF relative to Aug 7–12 period. Cannot definitively separate pre-switch vs. post-switch effects. Recommendation: confirm with AAPS logs whether profile was indeed active from Aug 7 onwards, or if Aug 7–12 used different settings. If pre-switch profile was different (e.g., basal 0.6 instead of 0.7 during 10:00–16:00), then Aug 7–12 midday elevation may have been even worse, supporting basal increase case. If Aug 7–12 profile was same as Aug 13+ (basal 0.7), then basal increase is still primary fix."
+    },
+    {
+      "category": "Monitoring frequency and communication",
+      "note": "After basal increase (step 2), check glucose logs daily for first 3 days (look for new lows or unexpected highs). After carb logging starts (step 4), review entries weekly to ensure consistency and data quality. After pre-bolus trial (step 6), observe lunch glucose curves for 3 days before extending to breakfast (step 7). If at any point glucose control worsens (e.g., TIR drops >10%, new frequent lows), halt further changes and contact care team. Safety threshold: more than 1 glucose reading <70 mg/dL in a single day (apart from pre-existing low patterns Aug 13–14) warrants immediate care team contact."
+    },
+    {
+      "category": "Documentation and version control",
+      "note": "Keep dated records of all profile changes: date, time, basal segment, old value, new value, reason, 3-day outcome glucose TIR/average/lows. This enables troubleshooting and communication with care team. If reverting a change (e.g., basal 0.85 U/h back to 0.7 U/h due to hypoglycemia), document revert reason and re-establish baseline monitoring. AAPS may have built-in profile history; use it. Nightscout may also log profile changes; cross-reference both."
+    }
+  ]
+}

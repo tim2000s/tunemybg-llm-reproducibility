@@ -1,0 +1,355 @@
+{
+  "summary": "The 14-day data shows good overall glycemic control with time-in-range of 86.0% and low average glucose, but overnight hypoglycemia is the dominant safety risk. The user does not announce meals, and all carbohydrate intake is covered by UAM-driven SMBs. The current AAPS automation is well-configured and actively compensates for a profile insulin sensitivity factor (ISF) that is too low. Reducing the overnight basal rate (00:00–05:00) and updating the ISF to better match observed sensitivity are the only supported profile changes. Meal strategy evaluation is blocked by the absence of any carb entries.",
+  "analysis_steps": [
+    {
+      "key": "data_quality",
+      "status": "completed",
+      "confidence": "high",
+      "findings": "CGM coverage is 98.7% (3,995 valid entries, 10 gaps, largest 65 min). No invalid or duplicate entries. The AAPS profile is complete and authoritative. The critical data gap is the complete absence of carbohydrate treatments: 0 carb entries, 0 g total carbs.",
+      "evidence": "telemetry.data_quality shows coverage_percent=98.7, valid_entry_count=3995, gap_count=10, largest_gap_minutes=65. treatment_summary.carb_entries=0, total_carbs_g=0.0. aaps_profile contains all required segments.",
+      "dependencies": [],
+      "data_gaps": "Zero carbohydrate entries prevent evaluation of carb ratios, meal bolus timing, e‑carb use, and any bolus–meal matching."
+    },
+    {
+      "key": "safety_overview",
+      "status": "completed",
+      "confidence": "high",
+      "findings": "Overnight hypoglycemia is the primary safety concern. Hourly local glucose data show below‑range percentages of 11.4–18.5% from 00:00 to 02:00, with nadirs reaching 41–42 mg/dL on several days. Hyperglycemic excursions occur but are less frequent and severe.",
+      "evidence": "hourly_glucose_local hours 0 (avg 93.3, below 11.4%), 1 (avg 90.6, below 18.5%), 2 (avg 101.9, below 10.1%). glucose_extremes show lows of 41, 42 mg/dL. overall time_in_range 86.0%, time-below_range 5.1%, cv 32.6%.",
+      "dependencies": ["data_quality"],
+      "data_gaps": null
+    },
+    {
+      "key": "basal_targets",
+      "status": "partial",
+      "confidence": "medium",
+      "findings": "Overnight basal 0.6 U/h (00:00–05:00) appears too high, evidenced by frequent zero temporary basals and high below‑range time. Morning rise (07:00–10:00) may be related to insufficient basal or unannounced meals; basal increase cannot be recommended without meal data. Target of 90 mg/dL overnight is low but does not alone explain the hypoglycemia.",
+      "evidence": "Loop statuses show zero temps overnight (e.g., Aug9 02:36, Aug10 02:46, Aug11 00:11 suggested zero, Aug16 00:25). hourly_glucose_local 00:00–05:00 below‑range exceeds 10%, with nadirs in the 40s. Basal segments: 0.6 U/h 00:00, 0.7 at 05:00, 0.8 at 06:00. Target 90 mg/dL 00:00–08:00.",
+      "dependencies": ["data_quality", "safety_overview"],
+      "data_gaps": "Absence of meal logs prevents distinguishing dawn rise from post‑prandial excursions; confidence in morning basal assessment is low."
+    },
+    {
+      "key": "profile_cr_isf_dia",
+      "status": "partial",
+      "confidence": "medium",
+      "findings": "Profile ISF of 56 mg/dL/U is too low. Correction boluses consistently produce glucose drops equivalent to 80–180 mg/dL per unit, and Dynamic ISF values routinely exceed 80 mg/dL/U. CR segments (10.5–13.2 g/U) cannot be evaluated because no meal data exist. DIA of 10 h is appropriate.",
+      "evidence": "therapy_response_windows: Aug10 0.2 U → -32 mg/dL at 120 min (160 mg/dL/U), Aug13 0.2 U → -125 mg/dL at 240 min, etc. Loop dynamic ISF values: 95.1, 87.1, 101.2, 83.3, etc., consistently above 56. Treatment summary shows 655 insulin entries but 0 carb entries.",
+      "dependencies": ["basal_targets"],
+      "data_gaps": "No carb treatments; CR evaluation is blocked. Correction bolus responses may be influenced by residual IOB or unannounced meals, but the consistent pattern across many events supports ISF adjustment."
+    },
+    {
+      "key": "automation_smb_uam",
+      "status": "completed",
+      "confidence": "high",
+      "findings": "AAPS SMB and UAM configuration is appropriate for a user who does not announce meals. SMB‑always and UAM are enabled, allowing automated detection of unannounced carbohydrate intake. No evidence of double‑counting or misbehavior.",
+      "evidence": "aaps_profile smb_enabled=true, uam_enabled=true. Loop statuses show UAM boost and microbolusing when COB=0. Zero carb entries prevent COB‑based SMB, making UAM essential.",
+      "dependencies": ["safety_overview", "basal_targets", "profile_cr_isf_dia"],
+      "data_gaps": null
+    },
+    {
+      "key": "automation_sensitivity_limits",
+      "status": "completed",
+      "confidence": "high",
+      "findings": "Dynamic ISF (sensitivity_algorithm=oref1, dynamic_isf_enabled=true) is actively compensating for the low profile ISF. The 70% adjustment factor is appropriate and prevents over‑correction. Other limits (max basal 12 U/h, max IOB 25 U) are safe and non‑binding. No automation settings require change; the root issue is the profile ISF.",
+      "evidence": "Loop variable_sens values frequently 80–110 mg/dL/U vs profile 56. dynamic_isf_adjustment_factor_percent=70. max_basal_u_per_hour=12, max_iob_units=25. No instances of binding limits.",
+      "dependencies": ["safety_overview", "basal_targets", "profile_cr_isf_dia", "automation_smb_uam"],
+      "data_gaps": null
+    },
+    {
+      "key": "meal_bolus_strategy",
+      "status": "blocked",
+      "confidence": "low",
+      "findings": "The user employs a fully UAM‑based meal coverage strategy: no meals are announced, and all insulin delivery is driven by basal, temporary basals, and UAM‑triggered SMB corrections. Prebolus timing, immediate bolus percentage, and CR cannot be assessed.",
+      "evidence": "carb_treatment_entries is empty; analysis_context.meal_strategies is empty; no carb‑associated boluses exist. Hourly glucose shows post‑prandial‑like rises, but their timing and magnitude cannot be linked to specific meals.",
+      "dependencies": ["basal_targets", "profile_cr_isf_dia", "automation_smb_uam", "automation_sensitivity_limits"],
+      "data_gaps": "Zero carb entries; this blocks any meal‑strategy evaluation."
+    },
+    {
+      "key": "meal_ecarbs_absorption",
+      "status": "blocked",
+      "confidence": "low",
+      "findings": "e‑Carb analysis is impossible without meal logs. The configured absorption parameters (min_5m_carbimpact=8 mg/dL/5 min, meal_max_absorption_hours=7 h) are reasonable for a GLP‑1 user, but no data exist to confirm or refine them.",
+      "evidence": "carb_treatment_entries=0; no extended carb events in representative_treatements. GLP‑1 use noted in representative_evevents (Aug14,17,20 1.25 mg).",
+      "dependencies": ["meal_bolus_strategy", "automation_smb_uam"],
+      "data_gaps": "No meal data."
+    },
+    {
+      "key": "synthesis_plan",
+      "status": "completed",
+      "confidence": "high",
+      "findings": "The dominant safety problem is overnight hypoglycemia driven by excessive basal insulin from 00:00 to 05:00. The profile ISF is set too low, causing the automation to constantly apply a large Dynamic ISF correction. These two profile adjustments—reducing the 00:00–05:00 basal and raising ISF—are the only changes supported by the data. All AAPS settings are appropriate, and the UAM‑only meal strategy is a pragmatic choice that cannot be evaluated further without carb announcements. The conservative order is to reduce the overnight basal first, verify nighttime safety, and then update ISF.",
+      "evidence": "Aggregated from all prior steps: hourly local glucose below‑range overnight; frequent zero temp basals; correction bolus and dynamic ISF values well above 56 mg/dL/U; zero carb entries; automation is well‑configured and not causing lows.",
+      "dependencies": ["data_quality", "safety_overview", "basal_targets", "profile_cr_isf_dia", "automtion_smb_uam", "automation_sensitivity_limits", "meal_bolus_strategy", "meal_ecarbs_absorption"],
+      "data_gaps": "No carb data remains the primary limitation for meal‑related evaluations."
+    }
+  ],
+  "strengths": [
+    "Overall time‑in‑range is strong at 86.0%.",
+    "CGM data quality is excellent with 98.7% coverage.",
+    "AAPS automation is functioning optimally: Dynamic ISF adapts sensitivity, UAM detects unannounced meals, and zero temporary basals protect against hypoglycemia.",
+    "Max safety limits (12 U/h basal, 25 U IOB) are generous and not constraining therapy.",
+    "GLP‑1 use is noted, and absorption settings (7 h, 8 mg/dL/5min) are plausible."
+  ],
+  "issues": [
+    "Recurrent overnight hypoglycemia, with below‑range time reaching 18.5% around 01:00–02:00 local time.",
+    "Profile ISF of 56 mg/dL/U is well below observed insulin sensitivity, forcing Dynamic ISF to constantly compensate.",
+    "No meals are announced; all carbohydrate intake is covered reactively by UAM, which may delay insulin delivery and contribute to post‑prandial excursions.",
+    "Absence of any carb entries prevents evaluation of carb ratios and meal bolus strategy."
+  ],
+  "recommendations": [
+    {
+      "area": "basal",
+      "title": "Reduce overnight basal (00:00–05:00)",
+      "priority": "safety",
+      "description": "Overnight hypoglycemia is the top safety issue. The current basal rate of 0.6 U/h from 00:00 to 05:00 leads to frequent zero temporary basals and glucose levels below 70 mg/dL. A reduction to 0.5 U/h is supported by hourly local data and would likely reduce the need for automated insulin suppression.",
+      "suggested_change": {
+        "parameter_key": "profile.basal.00_00",
+        "current_value": "0.6 U/h",
+        "suggested_value": "0.5 U/h"
+      }
+    },
+    {
+      "area": "isf",
+      "title": "Increase insulin sensitivity factor (ISF)",
+      "priority": "high",
+      "description": "The profile ISF of 56 mg/dL/U is too low. Correction bolus responses and Dynamic ISF values consistently indicate a sensitivity of 80 mg/dL/U or higher. Raising the ISF to 80 mg/dL/U would bring the profile closer to observed physiology, reduce reliance on Dynamic ISF compensation, and may slightly reduce correction insulin doses, lowering hypoglycemia risk.",
+      "suggested_change": {
+        "parameter_key": "profile.isf.00_00",
+        "current_value": "56 mg/dL/U",
+        "suggested_value": "80 mg/dL/U"
+      }
+    }
+  ],
+  "profile_recommendation": {
+    "focus": "basal",
+    "decision": "change",
+    "recommendation": "Reduce overnight basal rate from 00:00 to 05:00 from 0.6 U/h to 0.5 U/h.",
+    "rationale": "Hourly local glucose data show excessive time below range in the early night, and the system frequently sets zero temporary basals to compensate. This indicates the current basal rate is too high for the late evening and early night hours. A 0.1 U/h reduction is a conservative first step that directly addresses the dominant hypoglycemia risk.",
+    "confidence": "medium",
+    "next_check": "Monitor overnight glucose (00:00–05:00) and the frequency/duration of zero temporary basals for three nights. If hypoglycemia persists or IDLE temps remain frequent, consider a further small reduction."
+  },
+  "parameter_decisions": [
+    {
+      "parameter_key": "profile.basal.00_00",
+      "parameter": "Profile / basal 00:00",
+      "current_value": "0.6 U/h",
+      "suggested_value": "0.5 U/h",
+      "decision": "change",
+      "rationale": "Overnight lows and zero temp basals indicate basal excess. Reduce by 0.1 U/h as a safe first adjustment."
+    },
+    {
+      "parameter_key": "profile.basal.05_00",
+      "parameter": "Profile / basal 05:00",
+      "current_value": "0.7 U/h",
+      "suggested_value": "0.7 U/h",
+      "decision": "keep",
+      "rationale": "By 05:00 glucose is rising; no compelling evidence of excess at this segment while overnight basal is reduced."
+    },
+    {
+      "parameter_key": "profile.basal.06_00",
+      "parameter": "Profile / basal 06:00",
+      "current_value": "0.8 U/h",
+      "suggested_value": "0.8 U/h",
+      "decision": "keep",
+      "rationale": "Morning rise may be due to dawn phenomenon or unannounced meals; without meal data, increasing basal could be unsafe."
+    },
+    {
+      "parameter_key": "profile.basal.10_00",
+      "parameter": "Profile / basal 10:00",
+      "current_value": "0.7 U/h",
+      "suggested_value": "0.7 U/h",
+      "decision": "keep",
+      "rationale": "No specific safety signal; afternoon hyperglycemia is likely meal-related."
+    },
+    {
+      "parameter_key": "profile.basal.16_00",
+      "parameter": "Profile / basal 16:00",
+      "current_value": "0.5 U/h",
+      "suggested_value": "0.5 U/h",
+      "decision": "keep",
+      "rationale": "Late afternoon highs are likely postprandial; UAM bolusing is addressing them."
+    },
+    {
+      "parameter_key": "profile.basal.18_00",
+      "parameter": "Profile / basal 18:00",
+      "current_value": "0.6 U/h",
+      "suggested_value": "0.6 U/h",
+      "decision": "keep",
+      "rationale": "Evening glucose averages are acceptable; hypoglycemia risk is manageable with current automation."
+    },
+    {
+      "parameter_key": "profile.basal.19_00",
+      "parameter": "Profile / basal 19:00",
+      "current_value": "0.7 U/h",
+      "suggested_value": "0.7 U/h",
+      "decision": "keep",
+      "rationale": "No clear pattern of overnight lows extending into late evening that would warrant a reduction here."
+    },
+    {
+      "parameter_key": "profile.cr.00_00",
+      "parameter": "Profile / CR 00:00",
+      "current_value": "13 g/U",
+      "suggested_value": "13 g/U",
+      "decision": "keep",
+      "rationale": "Carb ratio cannot be evaluated without any meal data."
+    },
+    {
+      "parameter_key": "profile.cr.04_00",
+      "parameter": "Profile / CR 04:00",
+      "current_value": "11.1 g/U",
+      "suggested_value": "11.1 g/U",
+      "decision": "keep",
+      "rationale": "No meal data to support a change."
+    },
+    {
+      "parameter_key": "profile.cr.08_00",
+      "parameter": "Profile / CR 08:00",
+      "current_value": "13.2 g/U",
+      "suggested_value": "13.2 g/U",
+      "decision": "keep",
+      "rationale": "No meal data."
+    },
+    {
+      "parameter_key": "profile.cr.16_00",
+      "parameter": "Profile / CR 16:00",
+      "current_value": "10.5 g/U",
+      "suggested_value": "10.5 g/U",
+      "decision": "keep",
+      "rationale": "No meal data."
+    },
+    {
+      "parameter_key": "profile.cr.20_00",
+      "parameter": "Profile / CR 20:00",
+      "current_value": "12.6 g/U",
+      "suggested_value": "12.6 g/U",
+      "decision": "keep",
+      "rationale": "No meal data."
+    },
+    {
+      "parameter_key": "profile.isf.00_00",
+      "parameter": "Profile / ISF 00:00",
+      "current_value": "56 mg/dL/U",
+      "suggested_value": "80 mg/dL/U",
+      "decision": "change",
+      "rationale": "Observed insulin sensitivity (correction boluses, Dynamic ISF) is approximately 80–110 mg/dL/U. Raising ISF aligns profile with actual physiology and may reduce hypoglycemia risk."
+    },
+    {
+      "parameter_key": "profile.target.00_00",
+      "parameter": "Profile / target 00:00",
+      "current_value": "90 mg/dL",
+      "suggested_value": "90 mg/dL",
+      "decision": "keep",
+      "rationale": "Target alone does not explain the lows; basal reduction is the primary correction."
+    },
+    {
+      "parameter_key": "profile.target.08_00",
+      "parameter": "Profile / target 08:00",
+      "current_value": "100 mg/dL",
+      "suggested_value": "100 mg/dL",
+      "decision": "keep",
+      "rationale": "Daytime target is appropriate."
+    },
+    {
+      "parameter_key": "profile.target.23_00",
+      "parameter": "Profile / target 23:00",
+      "current_value": "90 mg/dL",
+      "suggested_value": "90 mg/dL",
+      "decision": "keep",
+      "rationale": "Evening target is consistent with the overall strategy."
+    },
+    {
+      "parameter_key": "profile.dia",
+      "parameter": "Profile / DIA",
+      "current_value": "10 h",
+      "suggested_value": "10 h",
+      "decision": "keep",
+      "rationale": "DIA of 10 h is a standard value and shows no inconsistency with insulin action."
+    },
+    {
+      "parameter_key": "aaps.core.smb_uam",
+      "parameter": "AAPS / SMB and UAM",
+      "current_value": "smb_enabled=true; uam_enabled=true",
+      "suggested_value": "smb_enabled=true; uam_enabled=true",
+      "decision": "keep",
+      "rationale": "Essential for coverage without meal announcements; no problems observed."
+    },
+    {
+      "parameter_key": "aaps.core.smb_activation",
+      "parameter": "AAPS / SMB activation conditions",
+      "current_value": "smb_always_enabled=true; smb_with_cob_enabled=false; smb_after_carbs_enabled=false; smb_with_temp_target_enabled=true; smb_with_high_temp_target_enabled=false",
+      "suggested_value": "smb_always_enabled=true; smb_with_cob_enabled=false; smb_after_carbs_enabled=false; smb_with_temp_target_enabled=true; smb_with_high_temp_target_enabled=false",
+      "decision": "keep",
+      "rationale": "Settings are appropriate for the user’s pattern: no carbs, occasional temp targets."
+    },
+    {
+      "parameter_key": "aaps.core.smb_delivery",
+      "parameter": "AAPS / SMB strength and frequency",
+      "current_value": "smb_interval_minutes=3 min; max_smb_basal_minutes=15 min; max_uam_smb_basal_minutes=20 min",
+      "suggested_value": "smb_interval_minutes=3 min; max_smb_basal_minutes=15 min; max_uam_smb_basal_minutes=20 min",
+      "decision": "keep",
+      "rationale": "Appropriate SMB aggressiveness; not causing lows when basal is corrected."
+    },
+    {
+      "parameter_key": "aaps.core.safety_limits",
+      "parameter": "AAPS / max basal and max IOB limits",
+      "current_value": "max_basal_u_per_hour=12 U/h; max_iob_units=25 U",
+      "suggested_value": "max_basal_u_per_hour=12 U/h; max_iob_units=25 U",
+      "decision": "keep",
+      "rationale": "Generous limits; not constraining therapy or causing risk."
+    },
+    {
+      "parameter_key": "aaps.core.sensitivity",
+      "parameter": "AAPS / Autosens and Dynamic ISF",
+      "current_value": "autosens_enabled=false; dynamic_sensitivity_enabled=true; autosens_raises_target=false; autosens_lowers_target=false; dynamic_isf_adjustment_factor_percent=70 %",
+      "suggested_value": "autosens_enabled=false; dynamic_sensitivity_enabled=true; autosens_raises_target=false; autosens_lowers_target=false; dynamic_isf_adjustment_factor_percent=70 %",
+      "decision": "keep",
+      "rationale": "Dynamic ISF is working well; the 70% factor is conservative and appropriate while profile ISF is corrected."
+    },
+    {
+      "parameter_key": "aaps.core.carb_absorption",
+      "parameter": "AAPS / carbohydrate absorption model",
+      "current_value": "min_5m_carbimpact=8 mg/dL/5 min; meal_max_absorption_hours=7 h",
+      "suggested_value": "min_5m_carbimpact=8 mg/dL/5 min; meal_max_absorption_hours=7 h",
+      "decision": "keep",
+      "rationale": "Plausible settings for GLP‑1 user; no meal data to warrant change."
+    }
+  ],
+  "meal_strategy_summary": {
+    "suggestion": "Continue the current UAM‑only meal coverage strategy. No prebolus or immediate bolus percentage can be recommended because no meals are announced. If the user wishes to improve postprandial control, start by announcing one meal per day with a rough carb estimate; this would allow future evaluation of prebolus timing and CR.",
+    "rationale": "All carbohydrate intake is handled reactively by UAM and SMB. While this avoids hypoglycemia from inaccurate announcements, it may contribute to postprandial peaks. Without any carb logs, meal strategy cannot be optimized.",
+    "confidence": "low",
+    "next_observation": "Announce one meal per day (even an estimated carb amount) for one week. This would provide the first data to assess CR, prebolus timing, and e‑carb effectiveness.",
+    "exceptions": [
+      {
+        "pattern": "Morning rise (07:00–10:00)",
+        "suggestion": "Could be dawn phenomenon or unannounced breakfast; announcing the morning meal would distinguish the cause.",
+        "rationale": "Average glucose peaks around 148 mg/dL at 09:00, but no carb data exist to assign it to a meal."
+      },
+      {
+        "pattern": "Late‑afternoon peak (15:00–17:00)",
+        "suggestion": "If a meal is consistently eaten at this time, announcing it would allow UAM to act earlier or enable a manual bolus.",
+        "rationale": "Highest hourly average (162 mg/dL) occurs at 16:00; this often follows unannounced intake."
+      }
+    ]
+  },
+  "implementation_steps": [
+    "1. Discuss all findings with your healthcare team.",
+    "2. Change the overnight basal rate (00:00–05:00) from 0.6 U/h to 0.5 U/h. Monitor a few nights with active CGM to confirm that below‑range time decreases.",
+    "3. If overnight safety improves, then change the Insulin Sensitivity Factor (ISF) from 56 mg/dL/U to 80 mg/dL/U. Watch correction bolus responses and Dynamic ISF values afterward.",
+    "4. Maintain all AAPS automation settings unchanged; they are functioning well.",
+    "5. If you are able, begin announcing at least one meal per day to enable future meal‑strategy review.",
+    "6. Keep a close glucose monitor log for at least two days after each change, verifying no unexpected lows or highs."
+  ],
+  "eduction": [
+    "Basal rates should match fasting insulin needs. Frequent zero temporary basals overnight indicate the basal is set too high for those hours.",
+    "Insulin Sensitivity Factor (ISF) is how much one unit of insulin lowers glucose. When Dynamic ISF constantly reports higher values than the profile ISF, it means the profile needs adjustment.",
+    "UAM (Unannounced Meal) detection uses glucose acceleration to catch carb intake without an entry. It is a helpful tool, but announcing meals allows faster and more precise insulin delivery.",
+    "GLP‑1 medications slow stomach emptying and may prolong carbohydrate absorption, making meal detection slightly delayed; this can be managed by careful observation."
+  ],
+  "safety_notes": [
+    "This is decision-support content only. The user must independently verify every proposed change, make changes one at a time, and monitor glucose closely.",
+    "Do not change multiple insulin‑delivery settings at the same time; verify the effect of one before proceeding to another.",
+    "Hypoglycemia risk is real; keep fast‑acting carbohydrates accessible at all times.",
+    "Discuss any profile modifications with your diabetes care team before implementing them."
+  ]
+}

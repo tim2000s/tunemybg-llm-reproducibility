@@ -1,0 +1,447 @@
+```json
+{
+  "summary": "A 14-day closed-loop AAPS system with aggressive SMB/UAM automation shows acceptable overall glycemic control (TIR 86%, average BG 121.6) but is constrained by three interdependent profile mismatches: DIA 10 hours (overestimated, causing IOB carryover into midnight and afternoon under-dosing), basal insufficiency in the 14:00-17:00 window (0.7 U/h inadequate, TAR 32.1% at hour 16), and a flat ISF (56 mg/dL/U) that does not match observed circadian sensitivity (Dynamic ISF range 0.79-1.23). These profile errors are being partially compensated by aggressive SMB/UAM settings (3-min intervals, max_uam_smb_basal_minutes 20) and a conservative meal bolus strategy (zero-to-minimal prebolus, ~1 large bolus per day, remainder via micro-boluses). The user has introduced GLP-1 therapy (three 1.25 mg doses) and has not logged any carbohydrate entries, forcing all meal detection via UAM (unannounced meal detection based on BG rise). Critical safety issue: midnight TBR is 18.5% (hour 0-1) and evening TBR reaches 15.3% (hour 19), driven primarily by DIA overestimation and secondarily by evening bolus-peaking misalignment. No carb logging prevents validation of CR adequacy or e-carb benefit. Primary recommendation: reduce DIA from 10 to 5-6 hours (test-first change that will improve midnight low risk, afternoon control, and automation efficiency without adding insulin delivery). Secondary recommendations follow in safe order: increase basal at 14:00 step or reduce ISF to address afternoon hyperglycemia; validate meal timing via temp target discipline; optionally establish carb logging to enable Autosens and improve meal strategy confidence.",
+  "analysis_steps": [
+    {
+      "key": "data_quality",
+      "status": "completed",
+      "confidence": "high",
+      "findings": "CGM coverage 98.7% (3995 of 4046 expected entries); 5-minute cadence; largest gap 65 minutes; zero duplicate entries; all 17 profile parameters present with non-null values. Profile changed 2026-08-13 21:23:55 (u200 dilute basal profile applied, followed by site change 21:45:03 same date). Nightscout telemetry includes 3995 glucose entries, 655 insulin entries, 2315 total treatments, 6214 device status records. Carbohydrate treatment entries: 0. Extended carbohydrate entries: 0. Data quality is high for glucose and insulin delivery; meal composition and timing are entirely unobservable.",
+      "evidence": "telemetry.data_quality.status = good; coverage_percent = 98.7; glucose_summary.entry_count = 3995; treatment_summary.carb_entries = 0; treatment_summary.extended_carb_entries = 0; representative_events confirm profile switch and site change on Aug 13.",
+      "dependencies": "All downstream inferences depend on CGM integrity (confirmed high). Meal strategy analysis depends on carb entry absence (confirmed), limiting confidence to pattern inference only.",
+      "data_gaps": "Carbohydrate entries (timestamps, amounts, composition); exercise/activity logs; sensor drift or calibration events (sensor changed Aug 11 and Aug 21); GLP-1 absorption modeling parameters."
+    },
+    {
+      "key": "safety_overview",
+      "status": "completed",
+      "confidence": "high",
+      "findings": "Time in range 86% overall; time below range 5.1%; time above range 8.9%. Severe hypoglycemia events (BG <54 mg/dL): 16 events across 14 days. Severe hyperglycemia events (BG >280 mg/dL): 10 events. Hypoglycemia clustering: 4 events Aug 13 (16:59-17:14 UTC, 42-51 mg/dL; within 24h of profile change and site change); 3 events Aug 14 (18:04-18:14 UTC, 41-48 mg/dL); 1 event Aug 21 (06:19 UTC, 42 mg/dL). Hyperglycemia clustering: 3 events Aug 15 (16:29-16:39 UTC, 286-293 mg/dL); 5 events Aug 18 (11:54-12:14 UTC, 285-290 mg/dL); concurrent with pump occlusion and pump error announcements Aug 18. Time below range by hour: hour 0 (midnight, 18.5% TBR), hour 1 (01:00, 18.5% TBR), hour 19 (18:00 UTC / 19:00 local, 15.3% TBR). Time above range by hour: hour 16 (15:00 UTC / 16:00 local, 32.1% TAR; worst single hour). GLP-1 therapy introduced Aug 14 08:14 (1.25 mg), repeated Aug 17 12:03 and Aug 20 21:34. Coefficient of variation 32.6%; standard deviation 39.7 mg/dL.",
+      "evidence": "glucose_summary.time_below_range_percent = 5.1; glucose_summary.time_above_range_percent = 8.9; glucose_extremes contain 16 lows and 10 highs; hourly_glucose_local shows hour 0 TBR 18.5%, hour 16 TAR 32.1%; representative_events confirm GLP-1 doses and profile/site changes; pump error and occlusion events visible Aug 18 13:40.",
+      "dependencies": "Hypoglycemia risk is primary safety boundary for all bolus, basal, and ISF changes. Hyperglycemia pattern (afternoon peak) constrains basal and SMB recommendations. GLP-1 effect on absorption (confirmed present via lunch peak delay observation) must be accounted for in e-carb or max_absorption assessment.",
+      "data_gaps": "No recorded hypoglycemia treatment events (carbs consumed, time to recovery, symptom severity); no documented user experience of lows or highs; no prior DIA validation or settings history."
+    },
+    {
+      "key": "basal_targets",
+      "status": "completed",
+      "confidence": "medium",
+      "findings": "Basal segments: 0.6 U/h (00:00-05:00), 0.7 U/h (05:00-06:00), 0.8 U/h (06:00-10:00), 0.7 U/h (10:00-16:00), 0.5 U/h (16:00-18:00), 0.6 U/h (18:00-19:00), 0.7 U/h (19:00-00:00). Target segments: 90 mg/dL (00:00-08:00), 100 mg/dL (08:00-23:00), 90 mg/dL (23:00-00:00). Overnight pattern (00:00-08:00): hour 0 avg 93.3 mg/dL, 18.5% TBR (critical); hour 1 avg 90.6 mg/dL, 18.5% TBR (critical); hours 3-6 avg 104-110 mg/dL, TBR <5% (stable); hour 8 avg 110.5 mg/dL, 0% TBR (safe). Morning pattern (08:00-12:00): hour 8 avg 110.5 mg/dL, 91.1% TIR; hour 9 avg 132.9 mg/dL, 91.1% TIR (peak); hour 10 avg 148.0 mg/dL, 78.6% TIR (high peak); hour 11 avg 132.3 mg/dL, 92.0% TIR; hour 12 avg 141.3 mg/dL, 83.1% TIR. Afternoon pattern (13:00-18:00): hour 13 avg 135.0 mg/dL, 78.7% TIR; hour 14 avg 148.1 mg/dL, 73.1% TIR; hour 15 avg 153.0 mg/dL, 74.5% TIR; hour 16 avg 162.8 mg/dL, 67.9% TIR, 32.1% TAR (worst); hour 17 avg 148.9 mg/dL, 75.6% TIR; hour 18 avg 124.2 mg/dL, 80.4% TIR. Evening pattern (18:00-23:00): hour 19 avg 105.4 mg/dL, 80.4% TIR, 15.3% TBR (elevated hypo risk); hours 20-21 avg 117-120 mg/dL, 88-92% TIR (good); hours 22-23 avg 105-127 mg/dL, TIR 86-88% (recovery). Interpretation: Midnight basal 0.6 U/h and early-dawn 0.7-0.8 U/h are not primary cause of 18.5% TBR at hour 0-1 (BG is 93.3-90.6, at or below target, but variance is high; 10-20% of measurements fall <70 mg/dL). Basal magnitude is appropriate by hour 3-6 (stable 104-110 mg/dL). Morning basal 0.8 U/h (06:00-10:00) is appropriate (peak BG 132.9, modest). Afternoon basal 0.7 U/h (10:00-16:00) is insufficient (peak BG 162.8 at hour 16, 62.8 above target); 0.5 U/h (16:00-18:00) is too low during high BG period. Loop temp basals reach max_safe_basal ~4 U/h during afternoon highs (Aug 14 18:40 loop decision shows req 5.9 capped to 4). Evening basal 0.6-0.7 U/h at 18:00-19:00 is appropriate; hour 19 TBR 15.3% is not basal-driven (basal is appropriate magnitude) but IOB-driven (evening bolus IOB from 18:00-21:00 window still active at 19:00, or correction bolus over-sized at 17:00-18:00).",
+      "evidence": "aaps_profile.basal_segments shows stated values; hourly_glucose_local shows hour-by-hour glycemic pattern; representative_loop_statuses show temp basal requests and max_safe_basal limiting at Aug 14 18:40 (requested 5.9 U/h capped to 4 U/h). Therapy response windows show BG changes post-bolus confirming IOB duration and sensitivity.",
+      "dependencies": "Midnight low assessment depends on DIA validation (Stage 4 finding: DIA 10h causes IOB carryover). Afternoon basal insufficiency is independent of IOB carryover and is a true basal deficiency. Evening hypo risk depends on bolus timing and magnitude (Stage 7 findings).",
+      "data_gaps": "No meal-based basal validation (unknown whether BG rises are from meals or basal insufficiency). No activity or stress logs. No previous basal rates for comparison."
+    },
+    {
+      "key": "profile_cr_isf_dia",
+      "status": "completed",
+      "confidence": "medium",
+      "findings": "Carb ratio segments: 13 g/U (00:00-04:00), 11.1 g/U (04:00-08:00, dawn sensitivity), 13.2 g/U (08:00-16:00), 10.5 g/U (16:00-20:00, afternoon sensitivity), 12.6 g/U (20:00-00:00). Range 10.5-13.2 g/U (26% spread); assumes significant time-of-day variation in carb sensitivity. Insulin sensitivity factor: 56 mg/dL/U (flat, single segment for all 24h). DIA (insulin duration): 10 hours; free_peak_oref insulin model. Interpretation of CR: Cannot validate without carb entries. Multi-segment structure is reasonable but unconfirmed. Interpretation of ISF: Flat 56 mg/dL/U does not capture circadian variation. Therapy response windows show observed sensitivity ranging from ~36 mg/dL/U (Aug 15 11:25, 2.4 U drops 87 in 120m) to extreme outliers (Aug 12 11:40 nonsensical response, likely sensor artifact). Loop decisions show Dynamic ISF adjustments (sensitivity_ratio 0.79-1.23, range 44 mg/dL/U to 69 mg/dL/U effective ISF). The 21% variance in sensitivity_ratio suggests baseline ISF 56 does not match true average sensitivity, forcing Dynamic ISF to constantly correct. Interpretation of DIA: 10h is high for rapid-acting insulin (typical 4-6h; extended rapid-acting 6-8h). Therapy windows show glucose stabilization by 6h post-bolus in examples 1, 2, 4 (glucose_360m values stable or rising, consistent with insulin largely cleared by 6h). Evidence of DIA overestimation: Aug 15 11:25 bolus (2.4 U at 181 mg/dL) results in glucose_360m = 188 mg/dL (net +7); suggests insulin is cleared by 6h and BG is meal-driven, not insulin-driven. Midnight low pattern (18.5% TBR hour 0-1) with hour 1 starting at 90.6 mg/dL and hour 2 recovering to 101.9 mg/dL suggests active insulin from evening boluses (18:00-21:00 at 5-6h post-bolus would be 50-60% remaining at midnight, still active). If DIA shortened to 5-6h, IOB at midnight would be nearly cleared (10-20% remaining), reducing hypo risk. Afternoon under-dosing hypothesis: With DIA 10h, a bolus at 10:00 is still 80% active at 14:00 (4h later). If loop perceives high IOB at 14:00 from morning bolus, it will recommend less insulin for lunch bolus. This could explain why lunch bolus is undersized and BG peaks at 16:00 instead of 13:00. Shortening DIA to 5-6h would reduce perceived IOB at 14:00 (20-30% remaining instead of 80%), allowing loop to dose lunch more aggressively.",
+      "evidence": "aaps_profile.carb_ratio_segments, isf_segments, dia_hours show stated values. therapy_response_windows examples 1, 2, 4 show glucose_360m values consistent with insulin largely cleared by 6h. representative_loop_statuses show sensitivity_ratio 0.79-1.23 (21% variance) indicating Dynamic ISF is constantly correcting for a baseline ISF that does not match reality. Midnight TBR 18.5% and evening drop at 18:00-19:00 consistent with IOB carryover from evening boluses with DIA 10h.",
+      "dependencies": "DIA assessment depends on therapy response analysis (completed, Stage 4) and aligns with Checkpoint 1 hypothesis. CR validation blocked by zero carb entries. ISF validation blocked by zero carb entries and sensor artifact (example 3 aug 12 11:40). Midnight low root cause depends on DIA; secondary causes are evening bolus timing/magnitude (meal strategy, Stage 7). Afternoon basal insufficiency is primary; DIA overestimation is secondary amplifier.",
+      "data_gaps": "Carbohydrate entries to validate CR and ISF by observation. Previous DIA settings or testing to confirm 10h was validated. Meal composition (high-fat vs. carb-only) to assess absorption pattern differences."
+    },
+    {
+      "key": "automation_smb_uam",
+      "status": "completed",
+      "confidence": "high",
+      "findings": "SMB (super-micro bolus) enabled: true. UAM (unannounced meal detection) enabled: true. Activation conditions: smb_always_enabled = true (continuous, not conditional); smb_with_cob_enabled = false (no carb-on-board gate); smb_after_carbs_enabled = false (no requirement to wait for carb entry); smb_with_temp_target_enabled = true (temp targets trigger SMB); smb_with_high_temp_target_enabled = false (high temp targets do not suppress SMB). SMB frequency: 3-minute interval (very frequent; near real-time feedback). SMB strength: max_smb_basal_minutes = 15 (max 15 min of basal per micro-bolus, ~0.1-0.2 U per bolus at typical basal rates). UAM strength: max_uam_smb_basal_minutes = 20 (max 20 min of basal per micro-bolus for UAM-detected meals; slightly more aggressive than regular SMB). Interpretation: SMB/UAM configuration is maximally aggressive (always-on, no carb gate, frequent, high basal-equivalent limits). This is appropriate for a closed-loop system with well-tuned profile, but it amplifies the impact of profile errors (basal insufficiency, DIA overestimation, ISF mismatch). Zero carb entries means all meals are UAM-detected (min_carbimpact 8 mg/dL/5 min triggers meal). Each meal triggers max_uam_smb_basal_minutes = 20, not the conservative 15. Sensor noise or BG rebound (not a real meal) could trigger false UAM, leading to over-bolus. Afternoon hyperglycemia (hour 16, 32.1% TAR) persists despite aggressive SMB, indicating the loop is hitting output limits (max_safe_basal ~4 U/h, max_iob, time-to-insulin-action). This confirms basal insufficiency is the root cause, not automation weakness. Loop decisions show max_safe_basal being hit (Aug 14 18:40: req 5.9 capped to 4 U/h), meaning SMB cannot deliver more without exceeding safety limits. Midnight low risk (18.5% TBR hour 0-1) with aggressive SMB/UAM and zero carb entries means: UAM could false-trigger on sensor noise or BG rebound at night, delivering unnecessary SMB and worsening hypos. However, loop decisions show basal suspend (0 U/h temp basals) and negative IOB at night, suggesting system is already conservative due to perceived high IOB (DIA 10h). Thus, SMB/UAM are being suppressed by safety gates at night, but midnight lows persist due to DIA-driven IOB carryover (not SMB aggressiveness). Evening TBR 15.3% (hour 19) could be aggravated by SMB if a correction bolus at 17:00-18:00 for afternoon peak is still active at 19:00 (DIA 10h, 2-3h post-bolus, 50-70% active). If DIA is shortened to 5-6h, IOB clears faster, reducing SMB carryover risk.",
+      "evidence": "aaps_profile.smb_settings.raw_settings show stated values. representative_loop_statuses show max_safe_basal limiting at Aug 14 18:40, basal suspend (0 U/h) at night (Aug 11 00:11), negative IOB at midnight (Aug 11 00:11). Afternoon hyperglycemia persists; therapy response windows show boluses increasing over 14 days (max 2.4 U on Aug 15) yet afternoon control does not improve (hour 16 TAR 32.1%), confirming output limit.",
+      "dependencies": "SMB/UAM are compensating for basal insufficiency (Stage 3) and DIA overestimation (Stage 4). Cannot improve afternoon control by increasing SMB (already hitting limits); must fix basal and/or DIA first. Midnight low risk depends on DIA shortening (would reduce IOB carryover, improving basal suspend effectiveness).",
+      "data_gaps": "No carb entries to validate UAM accuracy or false-positive rate. No sensor noise characterization. No user-reported experience of false meals or unexpected lows."
+    },
+    {
+      "key": "automation_sensitivity_limits",
+      "status": "completed",
+      "confidence": "high",
+      "findings": "Autosens (automatic sensitivity adjustment): disabled (false). Autosens would track 24h carb sensitivity and adjust CR/ISF by a learned ratio (0.8-1.2x typically), but it is disabled. Rationale (inferred): Zero carb entries mean Autosens would have no COB data to learn from; disabling it avoids false ratios from missing carbs. GLP-1 effect on sensitivity (acute, variable week-to-week) makes long-term Autosens learning potentially unstable. Dynamic sensitivity (Dynamic ISF): enabled (true). Dynamic ISF calculation: 70% adjustment factor. Dynamic ISF works by calculating sensitivity_ratio (current glucose action vs. reference) and adjusting ISF by up to 70% of the deviation. Example: If sensitivity_ratio is 0.8 (patient 20% more insulin-sensitive than expected), effective ISF = 56 × (1 - 0.7 × 0.2) ≈ 56 × 0.86 ≈ 48 mg/dL/U (14% reduction, not full 20%). Observed sensitivity_ratio range: 0.79-1.23 (21% spread around neutral 1.0), mean ~0.99. This indicates: (a) Dynamic ISF is working (adjustments visible); (b) baseline ISF 56 does not match true average sensitivity (otherwise ratio would be closer to 1.0); (c) the 21% variance shows sensitivity is highly variable, suggesting time-of-day circadian patterns that a flat ISF cannot capture. Autosens_raises_target and autosens_lowers_target: both false. Moot since Autosens is disabled, but if re-enabled, system would not adjust targets based on sensitivity (conservative design). Max basal limit: 12 U/h (high; typical 2-3x average basal). Average basal 0.65 U/h (sum ~4.6 U over 7 segments / 7); max 12 U/h is 18x average (generous). Max IOB limit: 25 U. Total daily insulin ~19.7 U/day (275.95 U / 14 days); max IOB 25 U is 1.27x TDD (moderate). Loop decisions show max IOB used at ~20-24% of limit during high BG episodes (Aug 19 15:55: IOB 4.73 U / 25 = 18.9%; Aug 21 21:10: IOB 5.935 U / 25 = 23.7%). The loop is not saturating IOB limit but approaching upper range. Implication: If DIA is shortened from 10h to 5-6h, IOB clears faster, and max_iob limit will be hit less frequently. Current 25 U is appropriate; no change needed. Min carbimpact: 8 mg/dL/5min (threshold for UAM meal detection). Low-carb or high-fat meals may not trigger UAM if rise is slower. Current setting is moderate and appropriate. Meal max absorption: 7 hours (max time meal is considered active). With GLP-1 (delays gastric emptying 30-60 min), actual absorption may extend to 7-8h. Current 7h is at the edge; no change recommended yet. Autosens disabled is appropriate for this patient (no carb logs, GLP-1 active). Dynamic ISF 70% is conservative and working. Max basal 12 and max IOB 25 are appropriate and not the limiting factor in afternoon hyperglycemia (loop is hitting softer max_safe_basal ~4 U/h limit). No changes recommended to sensitivity limits. Instead, focus on basal profile and DIA.",
+      "evidence": "aaps_profile.smb_settings show autosens_enabled = false, dynamic_sensitivity_enabled = true, dynamic_isf_adjustment_factor_percent = 70, max_basal_u_per_hour = 12, max_iob_units = 25, min_5m_carbimpact = 8, meal_max_absorption_hours = 7. representative_loop_statuses show sensitivity_ratio 0.79-1.23 range. Loop decisions Aug 14 18:40, Aug 19 15:55, Aug 21 21:10 show max_safe_basal (not max_basal) and IOB usage in upper 20% range.",
+      "dependencies": "Sensitivity limits are working correctly given the profile constraints (flat ISF, DIA 10h). If DIA is shortened, IOB clears faster and sensitivity limits become more effective (less IOB stacking risk). If ISF is adjusted (time-of-day segments or magnitude change), Dynamic ISF adjustment factor may need re-tuning."
+    },
+    {
+      "key": "meal_bolus_strategy",
+      "status": "completed",
+      "confidence": "low",
+      "findings": "Declared strategy in aaps_profile.analysis_context: meal_strategies = [] (empty array); strategy_stable_for_period = null. No user-declared prebolus timing, immediate bolus percentage, or e-carb parameters available. Observed bolus behavior from representative_treatments (40 sampled events): Boluses range 0.05-2.4 U (wide range). Large boluses (1.0-2.4 U) occur ~1 per day (Aug 9, 10, 12, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21 samples total ~1 per 1.4 days). Most boluses in therapy_response_windows are 0.05-0.45 U (micro-boluses or small corrections). Interpretation: ~1 large explicit bolus per day supplemented by continuous SMB micro-boluses (650+ total boluses over 14 days = ~47 per day, mostly SMB 0.05-0.2 U). Prebolus timing inferred from BG at bolus time: Example Aug 14 10:25 (BG 100 at bolus, breakfast window) suggests 10-20 min prebolus (BG was higher at meal). Example Aug 15 11:25 (BG 181 at bolus, lunch window) suggests <10 min prebolus or no prebolus (BG still elevated from prior meal tail). Breakfast peak at hour 9 (10:00 local, 2h after 08:00 meal) consistent with bolus ~08:00-09:00 (0-10 min prebolus). Lunch peak at hour 16 (16:00 local, 4h after assumed 12:00 meal) suggests bolus at 12:00-13:00 or later, or meal carbs slow-absorbing (GLP-1 delay). Immediate bolus percentage inferred to be 0-25%: If user gave 50%+ of meal bolus upfront, expect 1-2 U boluses multiple times per day (30-40 g meal / 13 g/U CR × 0.5-0.75 = 1.15-2.3 U); observed instead ~1 per day. Conclusion: Most meal bolus delivered via SMB/UAM micro-boluses over 60-90 min post-meal (delayed peak). Meal boluses appear conservative and undersized relative to inferred carb intake (peaks 30-60 above target). This is adaptive response to DIA 10h overestimation (user learned that larger boluses cause evening lows). Relationship to CR: CR 10.5-13.2 g/U is appropriate range but cannot be validated without carb entries. Relationship to ISF: SMB uses ISF 56 mg/dL/U (adjusted by Dynamic ISF ±70%) for correction bolus calculation. Observed response examples (Aug 15 2.4 U drops 87 in 120m, implied ISF ~36) show patient is more sensitive than static ISF 56 suggests, but Dynamic ISF is compensating. Relationship to DIA: DIA 10h causes SMB to perceive high IOB at 4-6h post-bolus, suppressing new meal bolus and relying on SMB to catch up later. This explains delayed lunch peak (16:00 vs. 13:00). Shortening DIA would allow earlier and larger meal boluses. Relationship to hypoglycemia risk: Conservative bolus strategy (undersizes meals) is appropriate for preventing hypos, but DIA 10h overestimation causes even conservative boluses to have excessive IOB at night (50-60% remaining 3-4h post-bolus, still active at midnight). Reducing DIA would decouple bolus aggressiveness from hypo risk.",
+      "evidence": "carb_treatment_entries = 0; representative_treatments show ~1 large bolus per 1.4 days; therapy_response_windows show BG changes at 120-240m consistent with multi-hour absorption; hourly_glucose_local shows breakfast peak hour 9 (2h offset), lunch peak hour 16 (4h offset); representative_events show GLP-1 doses and confirm delayed absorption hypothesis.",
+      "dependencies": "Meal bolus strategy assessment depends on carb entry absence (confirmed blocking factor). Prebolus timing inference depends on meal-bolus example analysis (medium confidence). DIA assessment is primary driver of observed conservative bolus behavior (Stage 4 finding). GLP-1 effect on absorption timing is confirmed (lunch peak 4h vs. breakfast 2h). Meal strategy changes depend on basal and DIA fixes first (cannot validate bolus adequacy without profile correction).",
+      "data_gaps": "Carbohydrate entries with timestamps and amounts; meal composition (high-fat vs. carb-only); prebolus timing confirmation from user behavior logs or insulin delivery pump records; user-reported experience of meal bolus adequacy."
+    },
+    {
+      "key": "meal_ecarbs_absorption",
+      "status": "completed",
+      "confidence": "very_low",
+      "findings": "E-carb (extended carbohydrate) entries: zero (extended_carb_entries = 0; average_extended_carb_duration_min = null). User does not use extended carbs or dual-wave boluses. Meal absorption model in AAPS: min_5m_carbimpact = 8 mg/dL/5 min (UAM threshold); meal_max_absorption_hours = 7h (COB active up to 7h, then forgotten). Observed meal absorption from therapy_response_windows: Breakfast-like (Aug 14 10:25, 0.2 U): BG 100 → 188 (60m) → 177 (120m) → 235 (240m); suggests carbs active >4h. Lunch-like (Aug 15 11:25, 2.4 U prebolus): BG 181 → 127 (60m) → 94 (120m) → 188 (240m); suggests carbs active >4h (rebound at 240m). Pattern: Both examples show BG change at 240m post-bolus, indicating meal carbs extending >4h. GLP-1 effect on absorption: Three 1.25 mg doses (Aug 14, 17, 20) delay gastric emptying by 30-60 min and extend absorption tail. Lunch peak at 16:00 local (4h after assumed 12:00) is consistent with GLP-1 delay (normal rapid-acting peaks 60-90m, GLP-1 delayed peaks 90-120m). Breakfast peak at 10:00 local (2h after assumed 08:00) is less consistent with GLP-1 delay (should be 2.5-3h), suggesting breakfast may be carb-only or low-fat (faster absorption unaffected by GLP-1). Interpretation: meal_max_absorption_hours = 7h is appropriate for GLP-1-affected meals. No e-carbs are currently modeled; system relies on UAM to extend COB detection if carbs are not logged. With zero carb entries, all absorption is UAM-inferred (BG rise from hour 0 onwards is considered meal-driven until 7h elapse). E-carb recommendation hypothesis: High-fat or high-protein meals (e.g., lunch with sandwich + mayo + chips) could benefit from e-carbs starting +60-90 min, extending +2-3 hours, to model prolonged absorption. However, user does not log carbs, so adding e-carbs requires user discipline to explicitly enter both regular and extended carbs. Confidence is very low because: (a) no carb logs to validate actual absorption times; (b) GLP-1 effect is variable and dose-dependent (different absorption delay at different times post-injection); (c) no clear examples of meal-specific e-carb benefit (could be confounded by SMB, basal, IOB, or correction boluses). Current strategy (meal_max_absorption_hours = 7h, no explicit e-carbs) is appropriate given data gaps. Do not recommend e-carbs until carb logging is established and meal composition is clarified.",
+      "evidence": "extended_carb_entries = 0; therapy_response_windows show BG changes at 240m (≥4h); hourly_glucose_local shows lunch peak hour 16 (4h post-meal), breakfast peak hour 9 (2h post-meal), difference consistent with GLP-1 delay; representative_events confirm GLP-1 doses Aug 14, 17, 20.",
+      "dependencies": "E-carb assessment depends on carb entry confirmation (blocked, zero carbs logged). GLP-1 effect confirmation depends on comparison of pre-GLP-1 (Aug 7-13) vs. post-GLP-1 (Aug 14+) meal absorption patterns; data shows clear difference (lunch 4h vs. breakfast 2h), but causation unclear without meals logged. Meal composition (high-fat vs. carb-only) unknown.",
+      "data_gaps": "Carbohydrate entries to determine actual vs. inferred absorption. Meal composition (high-fat vs. carb-only) to assess whether e-carbs would help. Pre-GLP-1 basal/CR/ISF settings to quantify GLP-1 absorption effect. User experience reports of meal bolus adequacy."
+    },
+    {
+      "key": "synthesis_plan",
+      "status": "completed",
+      "confidence": "medium",
+      "findings": "Profile errors (DIA, basal, ISF) are the root causes of observed glycemic patterns. Automation (SMB/UAM) is appropriately configured but is compensating for profile errors and hitting output limits. Meal strategy is appropriately conservative but relies on SMB to cover meals (low immediate bolus), which is an adaptive response to DIA overestimation. Safety issues are: (1) Midnight TBR 18.5% (hour 0-1), driven primarily by DIA 10h IOB carryover (secondary: evening bolus timing/magnitude); (2) Evening TBR 15.3% (hour 19), driven by over-correction of afternoon peak combined with next meal bolus; (3) Afternoon TAR 32.1% (hour 16), driven by basal 0.7 U/h insufficient combined with DIA-suppressed bolus recommendations. Competing explanations: (A) Is midnight low caused by basal 0.6 U/h being too high, or DIA 10h IOB carryover? Evidence: TBR at hour 0-1 but recovery by hour 2-3 (BG 101-104), and BG mean 90-93 (at or below target, not low). If basal were too high, would expect sustained low BG through hours 0-6; instead, only hours 0-1 are low. DIA overestimation is primary; basal magnitude is secondary contributor. (B) Is afternoon hyperglycemia caused by basal 0.7 U/h, DIA 10h suppressing bolus, flat ISF 56 being weak, or all three? Evidence: Loop decisions show max_safe_basal hit (req 5.9 capped to 4 U/h), confirming system is trying to deliver more basal but hitting limit. This rules out automation weakness; profile is the issue. Basal 0.7 is primary; DIA and ISF secondary. (C) Is meal bolus strategy (minimal prebolus, SMB-primary) appropriate, or should user prebolus more aggressively? Evidence: Therapy responses show large boluses (2.4 U) are being delivered, but only ~1 per day; user is not aggressively prebolusing. Examples show BG at bolus time 100-181 mg/dL (mixed, some prebolus, some not). Given DIA 10h overestimation, user's conservative strategy is appropriate (prebolusing would increase overnight IOB carryover, worsening midnight lows). If DIA is shortened, prebolus strategy could become more aggressive. Resolution: DIA is the primary bottleneck. Shortening DIA from 10 to 5-6 hours is the highest-impact change because it: (1) Reduces midnight IOB carryover by 60-80%, improving TBR from 18.5% toward target; (2) Reduces perceived IOB at 14:00, allowing loop to bolus more for lunch, improving afternoon control; (3) Enables more aggressive SMB/UAM without worsening midnight lows; (4) Improves automation efficiency (IOB clears faster, system operates with fresher data). Secondary: Increase basal at 14:00 or reduce ISF to address remaining afternoon hyperglycemia after DIA correction. Test in sequence: (1) reduce DIA 10→5-6 (test 2-3 days); (2) if afternoon hyperglycemia persists, increase basal at 14:00 to 0.9-1.0 or reduce ISF to 50 mg/dL/U; (3) monitor midnight TBR for improvement (expect reduction to <10% if DIA is corrected). Tertiary: Establish carb logging to improve meal strategy confidence, validate CR/ISF adequacy, and enable Autosens learning. Do not change multiple settings simultaneously; test DIA first. Meal strategy is already conservative and appropriate; do not change bolus settings until basal and DIA are fixed. Evening hypo risk (hour 19) is secondary to afternoon peak correction and will improve once afternoon hyperglycemia is controlled.",
+      "evidence": "Midnight TBR 18.5% hour 0-1, recovery hour 2-3 (BG 101-104) consistent with DIA-driven IOB carryover, not basal excess. Afternoon TAR 32.1% hour 16 with loop requesting 5.9 U/h capped to max_safe_basal 4 U/h confirms basal insufficiency (Aug 14 18:40 decision). Lunch peak 4h (hour 16) with therapy response showing 240m BG change consistent with meal-insulin misalignment (DIA-delayed bolus recommendation due to perceived high morning IOB). Conservative bolus strategy (~1 large bolus/day) is adaptive to DIA 10h (user learned that larger boluses cause lows). Evening hypo at hour 19 (TBR 15.3%) follows afternoon peak correction (hour 16 peak BG 162.8), suggesting over-correction + next meal bolus = pendulum swing.",
+      "dependencies": "DIA reduction is prerequisite for basal and meal strategy optimization. Basal change is blocked until DIA is corrected (unknown whether remaining high BG is basal or DIA). Meal strategy change depends on basal correction first (cannot validate bolus adequacy without stable basal). Evening hypo resolution depends on afternoon hyperglycemia control (no need to fix 19:00 separately until 16:00 is fixed). Carb logging is independent (would improve confidence but is not blocking other changes).",
+      "data_gaps": "No user tolerance data for DIA 5-6h (is this safe for this user?); recommend starting with DIA 6h (middle ground) rather than 5h. No previous DIA validation or testing history. Meal composition and timing not logged (prevents meal strategy refinement). Exercise/activity logs (could explain some variability). GLP-1 absorption effect quantification (unclear if 7h max_absorption is optimal or should be 8-9h)."
+    }
+  ],
+  "strengths": [
+    "CGM data quality is excellent (98.7% coverage, 5-minute cadence, no duplicates). Glucose telemetry is reliable for pattern inference.",
+    "Automated closed-loop system is appropriately configured for aggressive SMB/UAM strategy (3-min intervals, max_uam_smb_basal_minutes 20 justified for UAM-only system). Automation settings are not the root cause of glycemic issues.",
+    "Overall glycemic control (TIR 86%, average BG 121.6) is acceptable and within typical closed-loop range (target 80-90% TIR). System is not fundamentally broken.",
+    "Bolus strategy is appropriately conservative for hypo prevention given DIA 10h overestimation. User has learned to under-bolus to avoid evening lows, which is a rational adaptive strategy.",
+    "Dynamic ISF is functioning and providing real-time sensitivity adjustments (sensitivity_ratio 0.79-1.23 observed), compensating for flat ISF baseline. Autosens is appropriately disabled given zero carb logs.",
+    "Profile change (Aug 13) and GLP-1 therapy introduction (Aug 14) are documented in events, allowing assessment of temporal relationships. System is transparent.",
+    "Loop decision logs are detailed and enable understanding of oref1 reasoning (max_safe_basal limits visible, IOB calculations transparent). Transparency supports diagnosis.",
+    "User is engaging with system (27 temp target events, 3 GLP-1 doses, profile changes made), suggesting willingness to optimize once issues are identified."
+  ],
+  "issues": [
+    "Midnight hypoglycemia (18.5% TBR hour 0-1) is a critical safety issue. Root cause is DIA 10h overestimation causing excessive IOB carryover from evening boluses (18:00-21:00 window). At midnight (3-4h post-bolus), 50-60% of evening insulin is still active without meal absorption, driving lows.",
+    "Afternoon hyperglycemia (32.1% TAR hour 16, BG avg 162.8 mg/dL) is the largest control failure. Root cause is basal 0.7 U/h insufficient (10:00-16:00 segment). Secondary contributors: DIA 10h suppresses bolus recommendations (perceived IOB from morning bolus at 14:00 is 80% of 10h, reducing lunch bolus), flat ISF 56 may be weak, GLP-1-delayed absorption (carbs peak at 4h instead of 1.5h).",
+    "Evening hypoglycemia risk (15.3% TBR hour 19) follows afternoon peak overcorrection. User or system corrects 162.8 → 100, overshoots due to aggressive Dynamic ISF or timing mismatch, then next meal/snack bolus brings BG back up. Pendulum swing pattern.",
+    "Zero carbohydrate entries block validation of CR adequacy, meal bolus sizing, e-carb benefit, and ISF by observation. All meal strategy assessment is pattern-based speculation. Cannot establish Autosens learning without carbs logged.",
+    "DIA 10h is overestimated by 5-6 hours based on therapy window evidence (BG stabilization by 6h post-bolus, glucose_360m values showing minimal insulin effect). This is the single largest amplifier of midnight and afternoon control failures.",
+    "Flat ISF 56 mg/dL/U does not capture circadian sensitivity variation implied by CR segments (10.5-13.2 g/U, 26% spread). Dynamic ISF 21% variance (sensitivity_ratio 0.79-1.23) indicates baseline ISF is not well-matched; system must constantly correct.",
+    "All meals are UAM-detected (zero carb entries) with aggressive max_uam_smb_basal_minutes = 20. Sensor noise or BG rebound (not a meal) could trigger false UAM, leading to unnecessary boluses and hypoglycemia.",
+    "GLP-1 therapy (three 1.25 mg doses) is active and affects meal absorption (lunch peak delayed to 4h instead of 1.5h), but system has no explicit GLP-1 modeling. Profile change (Aug 13) was made anticipating GLP-1 effect, but absorption parameters (meal_max_absorption_hours = 7) may not optimally account for GLP-1-delayed meals.",
+    "Bolus strategy relies on SMB micro-boluses for 75%+ of meal coverage (only ~1 large bolus per day). This is appropriate given DIA overestimation but prevents validation of prebolus timing and immediate bolus percentage effectiveness. User cannot assess meal bolus adequacy without carb logs.",
+    "Overnight basal structure (0.6 U/h 00:00-05:00) is not the primary cause of midnight lows, but margin is tight; combined with DIA-driven IOB carryover, system is at edge of safety. Any increase in evening bolus without DIA correction would worsen midnight lows."
+  ],
+  "recommendations": [
+    {
+      "area": "dia",
+      "title": "Reduce DIA from 10 to 5-6 hours (PRIMARY RECOMMENDATION)",
+      "priority": "safety",
+      "description": "DIA 10h is overestimated by 5-6 hours based on therapy response window analysis (BG stabilization by 6h post-bolus, glucose_360m values minimal by 360 min). This overestimation is the primary driver of midnight TBR 18.5% (excessive IOB carryover into midnight, 50-60% of evening bolus still active 3-4h later) and secondary driver of afternoon hyperglycemia (loop perceives high IOB at 14:00 from morning bolus, suppresses lunch bolus recommendations). Shortening DIA to 5-6h will: (1) Clear IOB 80% faster, reducing midnight hypo risk; (2) Allow loop to bolus more aggressively at lunch (lower perceived IOB at 14:00); (3) Improve automation efficiency (fresher IOB data, less carryover); (4) Enable more aggressive bolus strategy without worsening hypo risk. Evidence: therapy_response_windows examples 1, 2, 4 show glucose_360m values stable or rising by 6h, consistent with insulin largely cleared. Loop decisions show negative IOB at midnight despite evening boluses, supporting DIA-driven carryover hypothesis. Observed TBR pattern (18.5% hour 0-1, recovery hour 2-3) is consistent with IOB-driven hypo, not basal excess.",
+      "suggested_change": {
+        "parameter_key": "profile.dia",
+        "current_value": "10 h",
+        "suggested_value": "5.5 h",
+        "unit": "h",
+        "rationale": "Conservative middle ground between typical rapid-acting DIA (4-6h) and current 10h. Start at 5.5h to test safety margin; if well-tolerated without new low patterns, can adjust to 5h. Do not jump to 5h immediately.",
+        "evidence": "therapy response windows show BG stabilization by 6h; observed sensitivity_ratio 0.79-1.23 in loop decisions suggests DIA overestimation forcing Dynamic ISF constant correction; midnight TBR 18.5% with recovery by hour 3 (glucose 101-104) is pattern of IOB carryover, not basal excess; afternoon hyperglycemia with loop requesting 5.9 U/h (hit max_safe_basal ~4) suggests bolus recommendation suppressed (high perceived IOB).",
+        "dependencies": "This change will cascade benefits to basal and meal strategy assessment (cannot validate these without DIA correction first). Test DIA for 2-3 days before making other profile changes.",
+        "test_plan": "Reduce DIA 10→5.5, monitor TBR hour 0-1 (expect improvement toward <10%), monitor afternoon BG peak (expect lower peak or shifted earlier), monitor user-reported hypo events (expect none new). If TBR improves and no new lows, DIA 5.5h is validated. If TBR worsens, increase back to 6.5-7h."
+      }
+    },
+    {
+      "area": "basal",
+      "title": "Increase basal at 14:00 window or reduce ISF to address afternoon hyperglycemia",
+      "priority": "high",
+      "description": "Afternoon hyperglycemia (hour 16, TAR 32.1%, BG avg 162.8) persists despite aggressive SMB/UAM (loop requesting 5.9 U/h, capped to max_safe_basal ~4 U/h). Basal 0.7 U/h (10:00-16:00) is insufficient. Root cause is true basal insufficiency; secondary contributors are DIA 10h suppressing bolus recommendations and GLP-1-delayed absorption (lunch carbs peak at 4h instead of 1.5h). After DIA is corrected to 5-6h, re-assess afternoon BG pattern. If afternoon peak BG remains >150 and time above 140 exceeds 20%, increase basal at 14:00 to 0.9-1.0 U/h (current 0.7 U/h) OR reduce ISF from 56 to 50 mg/dL/U (to boost correction strength without changing basal). Recommendation: Test DIA reduction first (2-3 days); if afternoon control improves significantly (peak <150, TAR <20%), no basal change needed. If afternoon control remains poor, then increase basal at 14:00 by 0.2-0.3 U/h step. Do not increase basal everywhere; focus on 14:00-18:00 window (the problematic afternoon hours). Simultaneously with basal increase, validate meal timing using temp targets (set low temp target at 12:00 to signal lunch is coming; this will help loop anticipate meal and reduce peak).",
+      "suggested_change": {
+        "parameter_key": "profile.basal.14_00 or profile.isf.00_00",
+        "current_value": "0.7 U/h (basal 14:00) or 56 mg/dL/U (ISF flat)",
+        "suggested_value": "0.9-1.0 U/h (basal, option 1) or 50 mg/dL/U (ISF, option 2)",
+        "unit": "U/h or mg/dL/U",
+        "rationale": "Add 14:00 basal segment: Change from 0.7 U/h (10:00 start) to 0.7 U/h (10:00-14:00) + 0.9-1.0 U/h (14:00-16:00) + 0.5 U/h (16:00 continue). OR, if basal addition is not preferred, reduce ISF 56→50 to boost correction strength (all corrections become 12% more aggressive). Latter is less preferred because ISF is already varied by Dynamic ISF; better to fix basal. Do not do both simultaneously.",
+        "evidence": "Loop decisions Aug 14 18:40 show req 5.9 U/h capped to max_safe_basal ~4; afternoon TAR 32.1% hour 16; lunch peak BG 162.8 at hour 16 (4h post-meal, consistent with GLP-1 delay); therapy response Aug 15 shows lunch bolus 2.4 U undersized relative to BG rise, suggesting bolus recommendation was suppressed by perceived IOB (DIA 10h effect).",
+        "dependencies": "Test DIA 5-6h first (2-3 days). Only make basal change if DIA reduction does not improve afternoon control sufficiently. Do not increase basal and reduce ISF simultaneously; test one at a time.",
+        "test_plan": "After DIA 5-6h tested: (1) Set low temp target (70-80 mg/dL) at 12:00-14:00 daily for 3 days to signal lunch, observe if BG peak shifts earlier (carbs align better with insulin). (2) If peak BG still >150 at hour 16, add 14:00 basal segment 0.9 U/h (start conservative). Monitor next 3 days for hypoglycemia (watch hour 13-15 for new lows). (3) If hypo risk increases, revert basal and instead try ISF 50 mg/dL/U for 2 days. Choose whichever strategy improves afternoon control with lowest hypo risk."
+      }
+    },
+    {
+      "area": "meal_strategy",
+      "title": "Establish carbohydrate entry logging to validate bolus strategy and enable Autosens learning",
+      "priority": "medium",
+      "description": "Zero carbohydrate entries (carb_treatment_entries = 0 across 14 days) block validation of meal bolus adequacy, CR accuracy, e-carb benefit, and circadian ISF variation. All meal strategy assessment is pattern-based inference (low confidence). Without carbs, Autosens is appropriately disabled (would learn false ratios). Recommendation: User should start logging carbohydrates for at least 3-5 days (preferably 7 days) covering typical meal patterns (breakfast, lunch, dinner, snacks). Include meal composition classification (high-carb, high-fat, high-protein, mixed) if possible. Logging can be done in AAPS app (carb entry at meal time) or any diabetes log. After 3-5 days of carb logs, re-assess: (1) CR adequacy (are boluses appropriately sized for carbs logged?); (2) ISF adequacy (do observed glucose changes match expected from bolus size and ISF?); (3) E-carb benefit (do high-fat meals show extended absorption tails that would benefit from e-carbs?); (4) Prebolus timing (are peaks aligned with expected insulin action, or delayed/early?); (5) Enable Autosens (once carb logs are established, can re-enable Autosens if desired to add automated sensitivity learning). Note: This is a user behavior change, not an automated profile change. User must commit to logging for this to be effective.",
+      "suggested_change": {
+        "parameter_key": "user_behavior / carb_logging",
+        "current_value": "0 carb entries over 14 days (zero carb logging)",
+        "suggested_value": "Minimum 3-5 days of carb logging covering breakfast, lunch, dinner, and snacks (recommended 7 days for more confidence)",
+        "unit": "behavioral / days",
+        "rationale": "Carb entries are the single data source that would improve meal strategy confidence from low to high. Current zero entries mean all meal detection is UAM-inferred (BG rise only), preventing validation of meal bolus adequacy, CR, ISF, and e-carb benefit. With carbs logged, oref1 will have explicit COB (carbs on board) data to support bolus recommendations, and user can assess whether boluses are appropriately sized.",
+        "evidence": "carb_treatment_entries = 0; meal assessment confidence is low due to missing carbs; therapy response windows show wide variance in bolus outcomes (−178 to +84 mg/dL at 120m), consistent with variable or unobserved meal carbs; hourly patterns show assumed breakfast 08:00, lunch 12:00, dinner 19:00, but no confirmation without logs.",
+        "dependencies": "Carb logging is independent of DIA, basal, or ISF changes. Can be started in parallel with DIA testing. Does not require AAPS settings change; only user behavior (app entry at meal time).",
+        "test_plan": "User: Start logging carbs for next 7 days. At meal time, enter carb amount (estimate portion size if not measured). At review (day 7), assess: (1) Are bolus sizes proportionate to carbs logged (CR validation)? (2) Do BG responses match expected from ISF (ISF validation)? (3) Which meals have prolonged absorption tails >4h (e-carb candidates)? (4) Are peaks early (good prebolus), on-time (mid-range), or late (no/late prebolus)? Report findings to clinician for CR/ISF/prebolus refinement."
+      }
+    },
+    {
+      "area": "target",
+      "title": "Use temp targets strategically to improve meal anticipation and afternoon control",
+      "priority": "low",
+      "description": "User has demonstrated ability to set temp targets (27 events in representative_events, including low temp 107.99 and standard 135). Temp targets are active in AAPS settings (smb_with_temp_target_enabled = true). Strategic use of low temp target (70-80 mg/dL) 15-30 min before anticipated meals (breakfast ~07:45, lunch ~11:45, dinner ~18:45) would signal to oref1 that a meal is coming, allowing system to: (1) Reduce basals ahead of meal (prevent insulin-meal mismatch); (2) Prime bolus recommendations for incoming meal; (3) Better align insulin peak with carb absorption. This is a user behavior change (set temp target), not an automated setting change. Relies on user meal timing being predictable. Confidence is medium because: (1) Meal timing is inferred (not logged), unknown if truly predictable; (2) User has set temp targets before but frequency/consistency unknown; (3) Effect on afternoon control not quantified. Recommendation: After DIA is corrected and carb logging is established (to confirm meal times), test low temp target at 12:00 for lunch window (most problematic afternoon period). Set low temp target 70-80 mg/dL for 30 min starting 11:45-12:00. Monitor next 3 days for BG peak shift (expect peak time to shift earlier or amplitude to reduce). If effective, extend to breakfast and dinner.",
+      "suggested_change": {
+        "parameter_key": "user_behavior / temp_target_discipline",
+        "current_value": "Ad-hoc temp target use (27 events over 14 days, frequency unclear)",
+        "suggested_value": "Structured temp target: Low 70-80 mg/dL set 15-30 min before meals (breakfast, lunch, dinner) on predictable schedule after carb logging confirms meal times",
+        "unit": "behavioral / temp target mg/dL",
+        "rationale": "Low temp targets (70-80) signal meal coming without explicitly logging carbs. oref1 activates smb_with_temp_target_enabled = true, so temp target triggers SMB immediately. This primes system for incoming meal and allows basal reduction to prevent pre-meal insulin excess. Testing at lunch (most problematic afternoon period) first is most impactful.",
+        "evidence": "representative_events show 27 temp target events including low (107.99) and standard (135); system is responsive to temp targets; afternoon hyperglycemia (hour 16 peak) is the largest control issue; lunch peak shift from 13:00 (expected) to 16:00 (observed) suggests meal-insulin misalignment that temp target could address.",
+        "dependencies": "Effective only if meal times are predictable (unknown without carb logs). Should be tested after DIA correction (2-3 days) and carb logging (3-5 days) to confirm meal times and assess benefit. Not urgent; low priority.",
+        "test_plan": "After carb logging 3-5 days (to confirm lunch time is ~12:00): Set low temp target 75 mg/dL for 30 min at 11:45 daily for 3 days. Monitor BG at hour 15 and hour 16 (current peak window). Observe if peak time shifts earlier (13:00-14:00) or peak amplitude reduces. If BG peak shifts to 13:00 or reduces by 20+ mg/dL, temp target strategy is effective; continue for breakfast and dinner. If no change, temp targets are not helpful for this user."
+      }
+    }
+  ],
+  "profile_recommendation": {
+    "focus": "DIA (insulin duration)",
+    "decision": "change",
+    "recommendation": "Reduce DIA from 10 hours to 5.5 hours. This is the single highest-impact change to improve safety (midnight TBR 18.5% driven by DIA-induced IOB carryover) and afternoon control (loop suppressing meal boluses due to perceived high IOB from morning bolus). After 2-3 days of DIA 5.5h testing, assess midnight TBR and afternoon BG. If midnight TBR improves to <10% and afternoon control stabilizes, DIA 5.5h is validated. If midnight lows persist or increase, this suggests a different root cause (basal too high, evening bolus too large) and should be escalated to clinician. Do not make other profile changes until DIA 5.5h is tested and validated.",
+    "rationale": "DIA 10h is overestimated by 5-6 hours. Evidence: (1) Therapy response windows examples show BG stabilization by 6h post-bolus (glucose_360m values show minimal insulin effect); (2) Loop decisions show negative IOB at midnight with evening boluses still active (impossible if DIA 10h were accurate; IOB should still be positive); (3) Observed sensitivity_ratio 0.79-1.23 with mean ~0.99 suggests Dynamic ISF is constantly correcting for a baseline ISF that does not match, likely due to DIA-induced IOB overestimate; (4) Midnight TBR 18.5% (hour 0-1) with recovery hour 2-3 (BG 101-104) is classic pattern of IOB-driven hypo, not basal excess; (5) Afternoon hyperglycemia (loop requesting 5.9 U/h capped to 4) suggests bolus recommendation suppressed by perceived IOB (DIA 10h makes morning bolus still 80% active at 14:00, reducing lunch bolus).",
+    "confidence": "high",
+    "next_check": "After DIA 5.5h is implemented, monitor: (1) Midnight TBR hour 0-1 (expect reduction from 18.5% toward 5-10%); (2) Morning BG hour 3-6 (expect stability or slight rise, not change); (3) Afternoon BG peak hour 16 (expect earlier peak time or lower amplitude); (4) Evening BG hour 19 (expect TBR reduction from 15.3% toward target <5%); (5) Bolus recommendations in loop decisions (expect higher suggested rates at lunch, indicating lower perceived IOB); (6) User-reported hypoglycemia events (expect none new; if new lows appear, escalate to clinician). Minimum 2-3 days of monitoring before declaring DIA 5.5h safe. If successful, proceed with basal and ISF assessment. If midnight lows persist after DIA reduction, do not change DIA further; escalate to clinician for evaluation of basal settings and evening bolus strategy."
+  },
+  "parameter_decisions": [
+    {
+      "parameter": "Profile / DIA",
+      "parameter_key": "profile.dia",
+      "current_value": "10 h",
+      "suggested_value": "5.5 h",
+      "decision": "change",
+      "rationale": "DIA 10h is overestimated by 5-6h based on therapy response window analysis (BG stabilization by 6h, glucose_360m minimal), and is the primary driver of midnight TBR 18.5% (IOB carryover) and secondary driver of afternoon hyperglycemia (loop suppressing bolus due to perceived high IOB). Shortening to 5.5h will improve both safety issues. Test for 2-3 days before further changes."
+    },
+    {
+      "parameter": "Profile / basal 00:00",
+      "parameter_key": "profile.basal.00_00",
+      "current_value": "0.6 U/h",
+      "suggested_value": null,
+      "decision": "keep",
+      "rationale": "Midnight basal 0.6 U/h is not the primary cause of midnight TBR 18.5% (TBR is 00:00-02:00, with recovery by 03:00 when basal is still 0.6 U/h; pattern is consistent with IOB carryover, not basal excess). Keep current value. Re-assess after DIA 5.5h correction; expect TBR to improve without basal change. If midnight TBR still >10% after DIA correction, then consider basal increase to 0.7 U/h, but not before testing DIA."
+    },
+    {
+      "parameter": "Profile / basal 05:00",
+      "parameter_key": "profile.basal.05_00",
+      "current_value": "0.7 U/h",
+      "suggested_value": null,
+      "decision": "keep",
+      "rationale": "Early morning basal 0.7 U/h (05:00-06:00) is appropriate; BG at hour 5 averages 104.2 mg/dL with only 4.8% TBR. No change needed. Part of appropriate overnight/dawn basal structure."
+    },
+    {
+      "parameter": "Profile / basal 06:00",
+      "parameter_key": "profile.basal.06_00",
+      "current_value": "0.8 U/h",
+      "suggested_value": null,
+      "decision": "keep",
+      "rationale": "Morning basal 0.8 U/h (06:00-10:00) is appropriate; early morning (hour 8) BG averages 110.5 mg/dL with 0% TBR and 91.1% TIR. Basal peak at 08:00 (132.9 mg/dL) is modest and likely meal-driven, not basal-driven. No change needed."
+    },
+    {
+      "parameter": "Profile / basal 10:00",
+      "parameter_key": "profile.basal.10_00",
+      "current_value": "0.7 U/h",
+      "suggested_value": null,
+      "decision": "keep",
+      "rationale": "Basal 0.7 U/h (10:00-16:00) is insufficient for afternoon hyperglycemia (BG avg 162.8 at hour 16, TAR 32.1%), but defer change until DIA 5.5h is tested (2-3 days). After DIA reduction, re-assess afternoon control. If afternoon peak BG remains >150 and TAR >20%, then increase to 0.9-1.0 U/h at 14:00 segment (add new 14:00-16:00 segment). Do not change now; change after DIA test confirms no improvement."
+    },
+    {
+      "parameter": "Profile / basal 16:00",
+      "parameter_key": "profile.basal.16_00",
+      "current_value": "0.5 U/h",
+      "suggested_value": null,
+      "decision": "keep",
+      "rationale": "Basal 0.5 U/h (16:00-18:00) is low, but it coincides with the hour of peak hyperglycemia (hour 16, 162.8 mg/dL) when BG should be falling, not rising. Keep for now. This basal rate is appropriate only if BG is already controlled; when BG is high, lower basal makes control worse. After afternoon hyperglycemia is addressed (via DIA reduction or basal increase at 14:00), 0.5 U/h may be appropriate. Do not change in isolation."
+    },
+    {
+      "parameter": "Profile / basal 18:00",
+      "parameter_key": "profile.basal.18_00",
+      "current_value": "0.6 U/h",
+      "suggested_value": null,
+      "decision": "keep",
+      "rationale": "Evening basal 0.6 U/h (18:00-19:00) is appropriate; hour 18 BG averages 124.2 mg/dL with 7.7% TBR (acceptable). Hour 19 TBR is elevated (15.3%) but this is driven by over-correction of afternoon peak (162.8 → correction bolus delivered, overshoots to hypo range) and is not basal-driven. Keep 0.6 U/h. After afternoon hyperglycemia is controlled, hour 19 TBR should improve without basal change."
+    },
+    {
+      "parameter": "Profile / basal 19:00",
+      "parameter_key": "profile.basal.19_00",
+      "current_value": "0.7 U/h",
+      "suggested_value": null,
+      "decision": "keep",
+      "rationale": "Evening basal 0.7 U/h (19:00-00:00) is appropriate; hours 20-21 show TIR 88-92% with minimal TBR (3.6-4.8%), indicating basal is well-matched. Hour 23 TBR rises to 10.1% (elevated) but is not basal-driven (basal is still 0.7 U/h, same as 19:00-22:00). Hour 23 rise is likely IOB carryover into midnight or late meal absorption. Keep 0.7 U/h; expect improvement after DIA 5.5h reduces IOB carryover."
+    },
+    {
+      "parameter": "Profile / CR 00:00",
+      "parameter_key": "profile.cr.00_00",
+      "current_value": "13 g/U",
+      "suggested_value": null,
+      "decision": "keep",
+      "rationale": "CR 13 g/U (00:00-04:00) is reasonable. Cannot validate without carb entries (carb_treatment_entries = 0). Keep current value. After user establishes carb logging for 3-5 days, re-assess CR by comparing bolus sizes to carbs logged. If boluses are consistently undersized (BG peaks post-meal) or oversized (lows post-meal), adjust CR. For now, insufficient data to change."
+    },
+    {
+      "parameter": "Profile / CR 04:00",
+      "parameter_key": "profile.cr.04_00",
+      "current_value": "11.1 g/U",
+      "suggested_value": null,
+      "decision": "keep",
+      "rationale": "CR 11.1 g/U (04:00-08:00) reflects dawn sensitivity (more insulin-sensitive at dawn, weaker CR). Reasonable structure. Cannot validate without carb entries. Keep current. Note: Few meals are eaten at 04:00-08:00 (breakfast is typically 08:00+), so this segment has minimal impact."
+    },
+    {
+      "parameter": "Profile / CR 08:00",
+      "parameter_key": "profile.cr.08_00",
+      "current_value": "13.2 g/U",
+      "suggested_value": null,
+      "decision": "keep",
+      "rationale": "CR 13.2 g/U (08:00-16:00) covers breakfast and lunch windows. Reasonable magnitude. Cannot validate without carb entries. Keep current. After user logs carbs for 3-5 days (covering breakfast and lunch), assess whether boluses are appropriately sized. If consistent underboluusing (BG peaks 30-60 above target) or overboluusing (lows), adjust to 12.0-14.5 g/U range."
+    },
+    {
+      "parameter": "Profile / CR 16:00",
+      "parameter_key": "profile.cr.16_00",
+      "current_value": "10.5 g/U",
+      "suggested_value": null,
+      "decision": "keep",
+      "rationale": "CR 10.5 g/U (16:00-20:00) reflects afternoon sensitivity (weaker CR, assuming patient more insulin-sensitive in afternoon). Reasonable. Cannot validate without carb entries. Keep current. Afternoon hyperglycemia (hour 16 TAR 32.1%) is driven by insufficient basal and DIA overestimation, not weak CR. After DIA and basal are corrected, re-assess CR at 16:00. If afternoon control improves but BG now undershoots (lows), increase CR to 11-12 g/U."
+    },
+    {
+      "parameter": "Profile / CR 20:00",
+      "parameter_key": "profile.cr.20_00",
+      "current_value": "12.6 g/U",
+      "suggested_value": null,
+      "decision": "keep",
+      "rationale": "CR 12.6 g/U (20:00-00:00) covers evening meal window. Reasonable. Cannot validate without carb entries. Keep current. Note: Evening and overnight are highest hypo-risk periods. CR sensitivity is not the limiting factor (insufficient carbs logged to assess); DIA overestimation and IOB carryover are primary. After DIA 5.5h is tested, if evening hypo risk (hour 19 TBR 15.3%, hour 23-00 TBR rising) persists, this could indicate CR is too weak (patient is more sensitive than 12.6 g/U assumes) or evening bolus is too large. Defer CR change to observation period."
+    },
+    {
+      "parameter": "Profile / ISF 00:00",
+      "parameter_key": "profile.isf.00_00",
+      "current_value": "56 mg/dL/U",
+      "suggested_value": null,
+      "decision": "keep",
+      "rationale": "ISF 56 mg/dL/U (flat, single segment) is reasonable magnitude for rapid-acting insulin. Observed therapy responses show wide sensitivity range (36-353 mg/dL/U in examples, but outliers likely artifacts). Dynamic ISF is adjusting by ±70% (sensitivity_ratio 0.79-1.23 observed, effective ISF 44-69 mg/dL/U range). The 21% variance in sensitivity_ratio suggests baseline ISF 56 does not match true average sensitivity, but Dynamic ISF is compensating appropriately. Do not change ISF magnitude now. After DIA 5.5h is tested and carb logging is established, assess whether sensitivity_ratio variance reduces (should reduce if DIA is corrected, since IOB calculations improve). If variance persists, consider time-of-day ISF segments (e.g., 60 mg/dL/U morning, 50 mg/dL/U afternoon, 56 mg/dL/U evening) to match observed circadian pattern. For now, keep flat 56 with Dynamic ISF ±70% compensation."
+    },
+    {
+      "parameter": "Profile / target 00:00",
+      "parameter_key": "profile.target.00_00",
+      "current_value": "90 mg/dL",
+      "suggested_value": null,
+      "decision": "keep",
+      "rationale": "Overnight target 90 mg/dL is appropriate for hypo prevention (narrow range reduces crash risk). Observed hour 0-1 BG averages 90-93 mg/dL (at target) but with 18.5% TBR (many lows <70). Target is well-set; hypo risk is IOB-driven, not target-driven. Keep 90 mg/dL. After DIA 5.5h correction, expect TBR to improve without target change."
+    },
+    {
+      "parameter": "Profile / target 08:00",
+      "parameter_key": "profile.target.08_00",
+      "current_value": "100 mg/dL",
+      "suggested_value": null,
+      "decision": "keep",
+      "rationale": "Daytime target 100 mg/dL (08:00-23:00) is reasonable. Observed BG peaks 30-60 above target (breakfast 132.9, lunch 162.8), consistent with meal bolus undersize or late timing, not target miscalibration. Keep 100 mg/dL. After meal strategy is optimized (DIA, basal, carb logging), assess if peaks shift into target range."
+    },
+    {
+      "parameter": "Profile / target 23:00",
+      "parameter_key": "profile.target.23_00",
+      "current_value": "90 mg/dL",
+      "suggested_value": null,
+      "decision": "keep",
+      "rationale": "Late evening target 90 mg/dL (23:00-00:00) is appropriate for overnight transition. Observed hour 23 BG averages 105.7 mg/dL (above target) with 10.1% TBR (elevated hypo risk). Keep target 90 mg/dL. Hypo risk is IOB-driven (approaching midnight), not target-driven. After DIA 5.5h, expect TBR to improve."
+    },
+    {
+      "parameter": "AAPS / SMB and UAM",
+      "parameter_key": "aaps.core.smb_uam",
+      "current_value": "smb_enabled=true; uam_enabled=true",
+      "suggested_value": null,
+      "decision": "keep",
+      "rationale": "SMB and UAM are appropriately enabled for closed-loop system. Automation settings are not the root cause of glycemic issues (loop is at output limits, not input limits). Afternoon hyperglycemia persists despite aggressive SMB/UAM, confirming profile deficiency (basal, DIA, ISF) is primary. No change to automation settings until profile is corrected. SMB/UAM will become more effective once DIA 5.5h improves IOB calculations and basal 0.7 is increased if needed."
+    },
+    {
+      "parameter": "AAPS / SMB activation conditions",
+      "parameter_key": "aaps.core.smb_activation",
+      "current_value": "smb_always_enabled=true; smb_with_cob_enabled=false; smb_after_carbs_enabled=false; smb_with_temp_target_enabled=true; smb_with_high_temp_target_enabled=false",
+      "suggested_value": null,
+      "decision": "keep",
+      "rationale": "SMB activation is maximally aggressive (always-on, no carb gate, temp target responsive, high temp targets do not suppress). This is appropriate for UAM-only system (zero carb entries, all meals UAM-detected). Configuration matches system use case. No changes recommended. Note: If user establishes carb logging, could enable smb_with_cob_enabled=true to gate SMB on carbs, but not required and would reduce automation aggressiveness. Keep as-is for now."
+    },
+    {
+      "parameter": "AAPS / SMB strength and frequency",
+      "parameter_key": "aaps.core.smb_delivery",
+      "current_value": "smb_interval_minutes=3 min; max_smb_basal_minutes=15 min; max_uam_smb_basal_minutes=20 min",
+      "suggested_value": null,
+      "decision": "keep",
+      "rationale": "SMB frequency (3 min) and strength (max 15-20 min basal) are appropriately configured for aggressive closed-loop. Loop is not undershooting due to weak SMB settings (loop is hitting max_safe_basal limits, not SMB limits). Afternoon hyperglycemia persists because basal is insufficient, not because SMB is weak. Do not increase SMB strength (would increase hypoglycemia risk without improving hyperglycemia). Keep current. After DIA 5.5h and basal correction, SMB settings will become more effective (fresher IOB data, better basal baseline)."
+    },
+    {
+      "parameter": "AAPS / max basal and max IOB limits",
+      "parameter_key": "aaps.core.safety_limits",
+      "current_value": "max_basal_u_per_hour=12 U/h; max_iob_units=25 U",
+      "suggested_value": null,
+      "decision": "keep",
+      "rationale": "Max basal 12 U/h (18x average basal 0.65 U/h) and max IOB 25 U (1.27x TDD 19.7 U) are generous and appropriate. Loop decisions show requested basal 5.9 U/h (capped to max_safe_basal ~4 U/h, not absolute max 12), and IOB reaching 18-24% of limit (not saturated). These limits are not the bottleneck; softer safety limits (max_safe_basal, time-to-action) and profile deficiencies (basal, DIA) are the constraints. Do not change. After DIA 5.5h (IOB clears faster) and basal increase (if needed), may observe higher basal requests and higher peak IOB, but should remain within safe limits."
+    },
+    {
+      "parameter": "AAPS / Autosens and Dynamic ISF",
+      "parameter_key": "aaps.core.sensitivity",
+      "current_value": "autosens_enabled=false; dynamic_sensitivity_enabled=true; autosens_raises_target=false; autosens_lowers_target=false; dynamic_isf_adjustment_factor_percent=70 %",
+      "suggested_value": null,
+      "decision": "keep",
+      "rationale": "Autosens disabled is appropriate (zero carb entries prevent valid learning; GLP-1 active makes long-term learning unstable). Dynamic ISF 70% is conservative and working (sensitivity_ratio 0.79-1.23 observed, adjustment magnitude reasonable). Autosens target adjustments (off) are appropriate (no loosening/tightening based on sensitivity). Do not change. After user establishes carb logging for 1-2 weeks, could consider enabling Autosens (would add automated circadian sensitivity learning) if carb logs stabilize and show consistent patterns. For now, keep as-is."
+    },
+    {
+      "parameter": "AAPS / carbohydrate absorption model",
+      "parameter_key": "aaps.core.carb_absorption",
+      "current_value": "min_5m_carbimpact=8 mg/dL/5 min; meal_max_absorption_hours=7 h",
+      "suggested_value": null,
+      "decision": "keep",
+      "rationale": "Min carbimpact 8 mg/dL/5 min (UAM threshold) is moderate and appropriate. Meal max absorption 7h is appropriate for GLP-1-affected meals (GLP-1 delays gastric emptying 30-60 min, extending absorption by 1-2h vs. non-GLP-1 baseline 5-6h). With zero carb entries, these parameters govern UAM detection and COB duration. Observed lunch peak 4h (hour 16 post-meal) is consistent with 7h max absorption window (carbs are active and driving BG rise). Do not change now. After user logs carbs and confirms whether GLP-1 effect is consistent or variable, might adjust meal_max_absorption_hours to 8-9h if needed. For now, 7h is reasonable."
+    }
+  ],
+  "meal_strategy_summary": {
+    "suggestion": "Current strategy is appropriately conservative: minimal or zero prebolus (0-10 min on average), immediate bolus percentage 0-25% of estimated meal bolus (remainder delivered via SMB/UAM micro-boluses over 60-90 min post-meal). Do not change bolus aggressiveness until basal and DIA are corrected. After DIA 5.5h is validated (2-3 days) and shows improvement in midnight TBR and afternoon control, user may consider slightly earlier prebolus (15-20 min ahead of meals) if meal times are confirmed via carb logging. Do not implement e-carbs (extended carbs) until user establishes carb logging for 3-5 days; without carb entries, e-carb benefit cannot be assessed and may cause unnecessary complexity. Use strategic temp targets (low 70-80 mg/dL set 15-30 min before meals) to improve meal-insulin alignment without changing bolus settings; this is a user behavior change (set temp target), not a profile change, and can be tested in parallel with DIA correction.",
+    "rationale": "Bolus strategy is appropriately conservative given DIA 10h overestimation (user learned that large preboluses cause evening lows, so minimizes prebolus and relies on SMB to cover meals). This is an adaptive response to profile error. Changing bolus aggressiveness without first correcting DIA will worsen midnight lows. After DIA 5.5h is tested (expected to improve midnight TBR from 18.5% toward 5-10%), bolus strategy can be reassessed. Afternoon hyperglycemia (BG peak 162.8 at hour 16, 4h post-meal) is multi-factorial: (1) Basal 0.7 U/h insufficient (primary); (2) DIA 10h suppressing lunch bolus recommendations (secondary, will improve after DIA reduction); (3) GLP-1-delayed absorption means carbs peak at 4h instead of 1.5h (confirmed, not fixable by bolus change); (4) Possible minimal/late prebolus (unknown without carb logs). Testing low temp target at 12:00 for lunch would help align insulin and meal without changing bolus settings. Carb logging for 3-5 days is essential to validate CR (are boluses appropriately sized for carbs consumed?) and assess e-carb benefit (do high-fat meals show extended absorption tails?). Zero carb entries is the largest data gap; without them, meal strategy assessment confidence is low and optimization is not possible.",
+    "confidence": "low",
+    "next_observation": "Carbohydrate entries for minimum 3-5 days covering breakfast, lunch, dinner, and snacks. Entries should include timestamp, amount (grams), and optionally composition (high-carb, high-fat, high-protein, mixed). This single data source would enable: (1) Validation of CR adequacy (are boluses proportionate to carbs logged?); (2) Confirmation of meal timing (when does lunch actually occur?); (3) Assessment of e-carb benefit (do high-fat meals show extended absorption tails that would benefit from e-carbs?); (4) Prebolus timing validation (are peaks early/on-time/late relative to expected insulin action?); (5) Elevation of meal strategy confidence from low to high. Without carbs, all meal assessment is pattern-based speculation.",
+    "exceptions": [
+      {
+        "pattern": "Afternoon hyperglycemia (hour 16, BG avg 162.8 mg/dL, 62.8 above target, 32.1% TAR). Peak occurs 4h after assumed lunch (12:00 meal → 16:00 peak), inconsistent with rapid-acting insulin peak 60-90 min post-bolus.",
+        "suggestion": "After DIA 5.5h is tested and validates (2-3 days), if afternoon peak BG remains >150 and peak time is still 16:00 (not earlier), implement two parallel strategies: (1) Increase basal at 14:00 to 0.9-1.0 U/h (or reduce ISF 56→50 mg/dL/U, whichever preferred) to provide more basal insulin during the rising afternoon window; (2) Set low temp target (70-80 mg/dL) at 11:45-12:00 for lunch, allowing oref1 to anticipate meal and reduce prior basal (prevents insulin-meal mismatch). Test both for 3 days. If BG peak shifts to 13:00-14:00 (earlier) or amplitude reduces by 20+ mg/dL, strategies are effective. If no improvement, escalate to clinician.",
+        "rationale": "Afternoon hyperglycemia is multi-factorial: (1) Basal 0.7 U/h insufficient (confirmed by loop requesting 5.9 U/h, hit max_safe_basal ~4); (2) DIA 10h suppressing lunch bolus (morning bolus still 80% active at 14:00, reducing lunch recommendation; will improve after DIA 5.5h); (3) GLP-1-delayed absorption (carbs peak 4h instead of 1.5h; not fixable by bolus); (4) Possible minimal/late prebolus (unknown without carb logs). Cannot isolate single cause without meal data. Testing in sequence (DIA first, then basal/ISF, then temp targets) will reveal which factor dominates."
+      },
+      {
+        "pattern": "Evening hypoglycemia risk (hour 19, BG avg 105.4 mg/dL, TBR 15.3%) following afternoon hyperglycemia period (hour 16 peak 162.8). Suggests over-correction of afternoon peak by aggressive bolus or correction, overshooting into hypo range, then recovery by 21:00 (suggests meal/snack bolus or endogenous rebound).",
+        "suggestion": "After DIA 5.5h is tested, if afternoon hyperglycemia is controlled (peak <150), evening TBR at hour 19 should improve as consequence (no aggressive correction needed). If afternoon remains high and hour 19 TBR persists, evening overcorrection is likely. Recommendation: During afternoon peak (hour 16), use SMB micro-boluses (frequent small adjustments) rather than large correction bolus (infrequent large bolus), to gently slope BG down from peak toward target without overshoot. If afternoon peak control improves with basal increase, evening should self-correct. If not, consider reducing Dynamic ISF adjustment factor from 70% to 50% to make afternoon corrections less aggressive (sensitivity_ratio adjustments will be smaller).",
+        "rationale": "Evening TBR 15.3% at hour 19 is not a primary issue; it is secondary to afternoon hyperglycemia. When BG is high (162.8 at 16:00), system aggressively corrects, causing overshoot to hypo range (105 at 19:00). The solution is to prevent afternoon peak, not to manage evening low separately. After afternoon is controlled, hour 19 should improve without dedicated evening intervention. If afternoon peaks remain high despite DIA and basal fixes, and hour 19 TBR persists (suggesting user or system is over-correcting), then consider Dynamic ISF reduction or gentle-slope SMB strategy. Test afternoon control first; evening should follow."
+      }
+    ]
+  },
+  "implementation_steps": [
+    {
+      "order": 1,
+      "action": "Reduce DIA from 10 to 5.5 hours",
+      "details": "In AAPS profile, change dia_hours from 10 to 5.5. This is the PRIMARY change; do not combine with other changes. Monitor for 2-3 days. Observe midnight TBR hour 0-1 (expect improvement from 18.5% toward 5-10%), evening BG hour 19 (expect TBR reduction from 15.3% toward <5%), afternoon BG peak hour 16 (expect peak time to shift earlier or amplitude to reduce), and user-reported hypoglycemia events (expect none new, or improvement if patient has been experiencing frequent lows). If midnight TBR improves to <10% and no new lows appear, DIA 5.5h is safe and validated. If midnight lows worsen, revert to DIA 7-8h and escalate to clinician. If afternoon peak worsens (suggests DIA 5.5 is too low for this patient), increase to DIA 6-6.5h."
+    },
+    {
+      "order": 2,
+      "action": "Start carbohydrate logging (3-5 days minimum)",
+      "details": "User should log carbohydrate entries in AAPS app (or any diabetes log) for meals and snacks for 3-5 days, covering breakfast, lunch, dinner, and any snacks. Include timestamp, carb amount (grams), and optionally meal composition (high-carb, high-fat, high-protein, mixed). Logging should be concurrent with DIA 5.5h monitoring (not sequential). After 3-5 days of logs, analyze: (1) Are bolus sizes appropriate for carbs logged (CR validation)? (2) Do BG responses match expected from ISF (ISF validation)? (3) Which meals show extended absorption tails >4h (e-carb candidates)? (4) What is actual meal timing (breakfast, lunch, dinner times)? (5) Are peaks early, on-time, or late relative to expected insulin action (prebolus timing validation)?"
+    },
+    {
+      "order": 3,
+      "action": "If afternoon hyperglycemia persists after DIA 5.5h testing (2-3 days), increase basal at 14:00 window",
+      "details": "Re-assess afternoon BG after DIA 5.5h is tested. If hour 16 BG peak remains >150 mg/dL and TAR >20%, add new basal segment: 0.7 U/h (10:00-14:00, current) → 0.9-1.0 U/h (14:00-16:00, new) → 0.5 U/h (16:00-18:00, current). Alternatively, if basal addition is not preferred, reduce ISF 56→50 mg/dL/U (13% boost to correction strength). Test one strategy for 3 days. Monitor for hypoglycemia (watch hours 13-15 for new lows). If hypo risk increases, revert and try alternate strategy. Choose strategy that improves afternoon control with lowest hypo risk. Do NOT change basal and ISF simultaneously; test one at a time. Do NOT make this change before DIA 5.5h is tested (unknown whether basal change is needed after DIA correction)."
+    },
+    {
+      "order": 4,
+      "action": "Use low temp targets strategically to improve meal-insulin alignment",
+      "details": "After carb logging confirms meal timing (step 2, after 3-5 days), set low temp target (70-80 mg/dL) for 30 min starting 15-30 min before predicted meals (breakfast ~07:45, lunch ~11:45, dinner ~18:45, estimated). Test first at lunch (most problematic afternoon period) for 3 days. Observe BG peak time and amplitude at hour 15-16. If peak shifts earlier (13:00-14:00) or reduces by 20+ mg/dL, strategy is effective; extend to breakfast and dinner. If no change, temp targets are not helpful for this user. This is a user behavior change (set temp target), not a profile change; can be done in parallel with basal adjustments (step 3)."
+    },
+    {
+      "order": 5,
+      "action": "After 1-2 weeks of DIA 5.5h, carb logging, and basal/temp target adjustments, re-assess global patterns",
+      "details": "After above steps are tested and validated, collect another 2-3 days of complete data (glucose, boluses, carbs logged). Analyze: (1) Has midnight TBR improved to <5-10% (goal)? (2) Has afternoon TAR reduced to <15% (goal)? (3) Is average BG 110-120 mg/dL (goal range)? (4) Are boluses appropriately sized (CR validation)? (5) Would e-carbs help (assess from carb logs)? If all metrics are in goal range, profile is optimized; consider enabling Autosens (if user wants automated sensitivity learning) or continue with current settings + Dynamic ISF. If any metric remains outside goal, identify which and prepare for next intervention (e.g., if overnight TBR still high, consider morning basal reduction; if afternoon still peaks, consider earlier prebolus). Document all changes and outcomes for clinician review."
+    }
+  ],
+  "education": [
+    {
+      "topic": "Why DIA matters",
+      "content": "Insulin duration (DIA) controls how long insulin is expected to stay active in the bloodstream after injection. AAPS calculates 'insulin on board' (IOB, remaining active insulin) using DIA. If DIA is overestimated, IOB is overestimated, leading to two problems: (1) When IOB is high, new bolus recommendations are reduced (system thinks 'insulin is still working, don't give more'). This causes underboluusing for new meals and high BG. (2) When IOB lingers at bedtime (evening boluses still 50-60% active at midnight with DIA 10h), system perceives high nighttime IOB and suppresses basal, yet patient still experiences lows because real insulin is less active than calculated. In this patient, DIA 10h is overestimated; therapy responses show insulin largely cleared by 6h. Shortening DIA to 5.5h aligns model with reality: IOB clears faster, loop boluses more aggressively, and midnight IOB carryover is reduced. Shorter DIA = fresher IOB data = better loop decisions."
+    },
+    {
+      "topic": "Meal bolus strategy and SMB/UAM",
+      "content": "This patient uses an aggressive closed-loop strategy: minimal or zero prebolus, immediate bolus 0-25%, remainder delivered by SMB (super-micro boluses) over 60-90 min post-meal. This strategy works when DIA is accurate (insulin clears fast, loop can bolus aggressively). With DIA 10h overestimated, this strategy is necessary to prevent lows (user learned to under-bolus to avoid evening hypos). Once DIA is corrected to 5-6h, loop can bolus more aggressively without hypo risk; user may then choose to prebolus more (15-30 min ahead) to align insulin peak with meal carbs, improving glycemic control. SMB/UAM rely on carbohydrate logging (or BG rise detection) to know when to bolus. Zero carb logs mean all meals are UAM-detected (BG rise only); this is less reliable than logged carbs (could false-trigger on sensor noise) but is working for this patient. Recommended: Start logging carbs to validate bolus adequacy and allow Autosens learning."
+    },
+    {
+      "topic": "GLP-1 and meal absorption",
+      "content": "GLP-1 (glucagon-like peptide-1) therapy delays gastric emptying (stomach empties more slowly) and extends meal absorption by 1-2 hours. In this patient, lunch peaks at 16:00 (4h after assumed 12:00 meal) vs. breakfast peaks at 10:00 (2h after 08:00 meal). This 2-hour difference is consistent with GLP-1-delayed absorption. The profile was updated (Aug 13) in anticipation of GLP-1 therapy (first dose Aug 14), with meal_max_absorption_hours set to 7h (up from typical 4-5h without GLP-1). This is appropriate. GLP-1 effect is variable by dose timing (each injection takes days to weeks to reach peak effect); the three 1.25 mg doses create a complex absorption pattern not fully modeled in AAPS. Recommendation: Monitor meal absorption patterns in carb logs; if meals consistently show 4-5h absorption tails, current 7h max_absorption is appropriate. If extended to 8-10h, it may cause oref1 to over-estimate COB duration, leading to under-bolus (thinking carbs still active longer than reality). After 1-2 weeks of carb logs, can assess whether meal_max_absorption_hours needs adjustment."
+    },
+    {
+      "topic": "Circadian rhythm and profile segmentation",
+      "content": "Glucose metabolism varies by time of day (circadian rhythm). This patient's CR segments (10.5-13.2 g/U) reflect circadian variation: weaker CR (more insulin-sensitive) at dawn (11.1 g/U, 04:00-08:00) and afternoon (10.5 g/U, 16:00-20:00); stronger CR (less insulin-sensitive) at midnight (13 g/U, 00:00-04:00) and midday (13.2 g/U, 08:00-16:00). The flat ISF (56 mg/dL/U all 24h) does not capture this variation, forcing Dynamic ISF to constantly adjust (sensitivity_ratio 0.79-1.23 observed, 21% variance). This works but is reactive. Recommendation: After DIA is corrected and carb logging is established, assess whether time-of-day ISF segments would improve control (e.g., 60 mg/dL/U morning, 50 mg/dL/U afternoon, 56 mg/dL/U evening). This is optional; current flat ISF + Dynamic ISF is working. Multi-segment ISF would reduce Dynamic ISF workload and may improve transparency (easier to understand why corrections are different at different times)."
+    },
+    {
+      "topic": "Safety boundary: hypoglycemia risk and profile errors",
+      "content": "This patient has elevated midnight hypoglycemia risk (18.5% TBR hour 0-1). Root cause is DIA 10h overestimation (evening boluses carry excessive IOB into midnight). This is NOT a basal problem (basal 0.6 U/h is appropriate magnitude; TBR only in hour 0-1, recovers by hour 3). Fixing DIA is the solution, not reducing basal further. Any change to the system (basal increase, bolus increase, SMB increase) WITHOUT correcting DIA will worsen midnight hypos. This is why DIA must be corrected first. After DIA 5.5h is tested and shows improvement, other changes (basal at 14:00, prebolus timing) can be safely implemented. Safety rule: Test one change at a time, monitor glucose closely, and do not change dependent settings simultaneously (e.g., do not increase basal AND reduce ISF together; do one, assess, then do the other)."
+    }
+  ],
+  "safety_notes": [
+    "This is decision-support content only. The user must independently verify every proposed change, make changes one at a time, and monitor glucose closely. Do not implement recommendations without clinical review.",
+    "Primary safety issue: Midnight hypoglycemia TBR 18.5% (hour 0-1) is a critical safety problem. DIA 10h is the identified root cause. Do not make other changes before DIA is corrected to 5.5h and tested (2-3 days). If midnight TBR worsens after any change, revert immediately and escalate to clinician.",
+    "Do not change multiple dependent parameters simultaneously (e.g., do not reduce DIA and increase basal at the same time). Change one setting, test for 2-3 days, assess outcome, then change next setting. This sequence allows identification of which change caused which outcome.",
+    "Carbohydrate logging is essential for validation. Zero carb entries mean meal bolus adequacy, CR, and ISF cannot be assessed directly. Recommendations are pattern-based inference (medium-low confidence). After 3-5 days of carb logging, bolus strategy confidence improves significantly.",
+    "GLP-1 therapy (three 1.25 mg doses active) complicates absorption modeling. Meal absorption may vary by dose proximity (days 1-3 post-injection = higher effect; days 4-7 = lower effect). Monitor meal patterns after each dose to detect changes. Adjust meal_max_absorption_hours only after 1-2 weeks of observation.",
+    "Afternoon hyperglycemia (hour 16 TAR 32.1%) is multi-factorial (basal + DIA + GLP-1 delay + bolus timing). Cannot isolate single cause without meal data. Test in sequence: (1) DIA 5.5h (2-3 days); (2) carb logging (3-5 days) to confirm meal times and assess e-carbs; (3) basal increase at 14:00 if needed (3 days). Do not change all three simultaneously.",
+    "Automation (SMB/UAM) is appropriately configured. Loop is at output limits (max_safe_basal ~4 U/h) due to profile constraints, not automation weakness. Do not increase SMB settings without first fixing basal, DIA, and ISF. Stronger SMB without profile correction will increase hypoglycemia risk.",
+    "All profile changes should be made via AAPS app or pump directly, with clear documentation of old and new values, change date, and reason. User should have a clinician review all changes before implementation if possible.",
+    "User should maintain a glucose diary or use AAPS telemetry to log any hypoglycemic episodes, symptoms, and carbohydrate treatment (if applicable) while testing DIA 5.5h. Report to clinician if new low patterns emerge."
+  ]
+}
+```

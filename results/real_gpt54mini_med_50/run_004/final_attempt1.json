@@ -1,0 +1,461 @@
+{
+  "summary": "Strong CGM coverage and a coherent AAPS profile support review, but the period shows mixed control: recurrent lows overnight/late evening and recurrent highs late morning through mid-afternoon. The evidence does not cleanly separate basal, meal, correction, and automation effects, so no profile change is supported yet; the safest next step is to keep the current profile and verify the pattern with better meal-linked observation.",
+  "analysis_steps": [
+    {
+      "key": "data_quality",
+      "status": "completed",
+      "confidence": "high",
+      "findings": "CGM quality is strong enough for review: 3,995 entries, 98.7% coverage, no invalid or duplicate entries, 10 gaps total, and the largest gap is 65 minutes. Hourly local data are available and suitable for pattern work. The main limitation is the absence of carb treatment entries and meal-linked timestamps.",
+      "evidence": "Telemetry reports good data quality, 5-minute cadence, last entry near period end, and full profile data in aaps_profile.",
+      "dependencies": [],
+      "data_gaps": "No carb entries, no meal composition, and no explicit per-meal bolus timing to anchor meal analysis."
+    },
+    {
+      "key": "safety_overview",
+      "status": "completed",
+      "confidence": "high",
+      "findings": "The safety pattern is mixed: time in range is 86.0%, time below range is 5.1%, and lows reach 41 to 42 mg/dL on multiple days. Highs also recur, with daily peaks up to 293 mg/dL. Local hourly lows cluster around 00:00 to 02:00 and 18:00 to 19:00, while highs cluster around 09:00 to 16:00.",
+      "evidence": "Daily glucose rows, hourly local glucose rows, glucose extremes, and glucose summary values.",
+      "dependencies": [
+        "data_quality"
+      ],
+      "data_gaps": "No symptom context, no meal timing, and no explicit activity log to separate insulin effects from behavior or absorption effects."
+    },
+    {
+      "key": "basal_targets",
+      "status": "partial",
+      "confidence": "medium",
+      "findings": "Overnight is not uniformly high; the earliest hours lean low, while the strongest rise is late morning through mid-afternoon. The current target structure is 90 mg/dL overnight, 100 mg/dL from 08:00, and 90 mg/dL after 23:00. The basal profile is not clearly contradicted by the data, but the late-day low tendency and the daytime rise remain unresolved against meal and automation effects.",
+      "evidence": "Hourly local averages and low percentages, daily glucose pattern, basal segments, and target segments.",
+      "dependencies": [
+        "data_quality",
+        "safety_overview"
+      ],
+      "data_gaps": "No meal markers, no exact bolus-to-meal mapping, and no way to isolate fasting windows cleanly from correction or activity effects."
+    },
+    {
+      "key": "profile_cr_isf_dia",
+      "status": "partial",
+      "confidence": "low",
+      "findings": "The CR pattern is plausible but not separable from other factors: 13 g/U at midnight, 11.1 g/U at 04:00, 13.2 g/U at 08:00, 10.5 g/U at 16:00, and 12.6 g/U at 20:00. ISF is 56 mg/dL/U and DIA is 10 h. Correction response windows are highly mixed and often confounded by temp basals, active IOB, likely meals, and changing sensitivity, so neither ISF nor DIA can be cleanly judged from this package alone.",
+      "evidence": "Carb ratio segments, ISF segment, DIA, therapy response windows, and representative treatments.",
+      "dependencies": [
+        "basal_targets"
+      ],
+      "data_gaps": "No carb entries, no prebolus timing, no bolus wizard details, and no meal composition or absorption data."
+    },
+    {
+      "key": "automation_smb_uam",
+      "status": "completed",
+      "confidence": "high",
+      "findings": "SMB and UAM are enabled and actively used. SMB activation settings are internally consistent: always enabled, with COB and after-carbs SMB disabled, SMB allowed with temp targets, and not allowed with high temp targets. The cadence values are tight but not obviously inconsistent. The package does not show a binding problem with max basal or max IOB.",
+      "evidence": "AAPS SMB settings, representative loop statuses, and representative treatments showing SMB-linked closed loop behavior.",
+      "dependencies": [
+        "safety_overview",
+        "basal_targets",
+        "profile_cr_isf_dia"
+      ],
+      "data_gaps": "No direct meal data to tell whether SMB is helping daytime highs or amplifying late-day lows."
+    },
+    {
+      "key": "automation_sensitivity_limits",
+      "status": "completed",
+      "confidence": "medium",
+      "findings": "Autosens is disabled, dynamic sensitivity is enabled, and the dynamic ISF adjustment factor is 70%. Sensitivity_ratio values around 1 are neutral current adjustment, not evidence of disabled Autosens. Max basal 12 U/h and max IOB 25 U are safety ceilings and do not appear to constrain observed dosing in this period.",
+      "evidence": "AAPS sensitivity and safety limit settings, representative loop statuses, and enacted rates and IOB values within the telemetry.",
+      "dependencies": [
+        "safety_overview",
+        "basal_targets",
+        "profile_cr_isf_dia",
+        "automation_smb_uam"
+      ],
+      "data_gaps": "No direct decomposition of how much of the observed pattern comes from dynamic ISF versus basal, CR, or target settings."
+    },
+    {
+      "key": "meal_bolus_strategy",
+      "status": "partial",
+      "confidence": "low",
+      "findings": "No carb treatment entries are present, and treatment_summary reports zero carb entries and zero total carbs. The correction windows do not support a reliable bolus timing or immediate bolus percentage rule because they are confounded by temp basals, IOB, likely meals, and automation. The user-declared analysis_context does not provide a stable meal strategy declaration for this period.",
+      "evidence": "telemetry.carb_treatment_entries is empty, treatment_summary shows no carb entries, and therapy response windows are correction-bolus windows with mixed 2 to 6 hour responses.",
+      "dependencies": [
+        "basal_targets",
+        "profile_cr_isf_dia",
+        "automation_smb_uam",
+        "automation_sensitivity_limits"
+      ],
+      "data_gaps": "No per-meal carb or bolus trace, no meal strategy declaration fields, and no meal-linked response windows."
+    },
+    {
+      "key": "meal_ecarbs_absorption",
+      "status": "blocked",
+      "confidence": "low",
+      "findings": "There is no evidence for routine e-carbs in this package. No carb entries, no extended carb entries, and no e-carb durations are available, so absorption timing cannot be compared against a 6-hour glucose trace. E-carbs should not be inferred from the aggregate data or treated as a pump extended bolus equivalent.",
+      "evidence": "treatment_summary shows zero carb entries and zero extended carb entries, and carb_treatment_entries is empty.",
+      "dependencies": [
+        "meal_bolus_strategy",
+        "automation_smb_uam"
+      ],
+      "data_gaps": "No meal-linked prolonged absorption pattern and no exact carb timing or duration records."
+    },
+    {
+      "key": "synthesis_plan",
+      "status": "completed",
+      "confidence": "medium",
+      "findings": "The main conflict in the package is mixed control rather than a single faulty setting: lows are recurrent overnight and late evening, while highs recur late morning through mid-afternoon. Package data override any earlier loose interpretation: there are no carb entries, no declared meal strategy values to confirm, sensitivity_ratio near 1 is neutral, and SMB waiting time is not the configured SMB interval. Automation is active and coherent, but it may be compensating for profile or meal effects rather than causing a clear defect. No dependent settings should be changed together because the evidence does not separate basal, CR, ISF, DIA, target, SMB/UAM, and meal timing cleanly.",
+      "evidence": "All prior stages, aaps_profile, profile_context, decision_inventory, local hourly glucose, daily glucose, treatment summary, therapy response windows, and representative loop status/treatments.",
+      "dependencies": [
+        "data_quality",
+        "safety_overview",
+        "basal_targets",
+        "profile_cr_isf_dia",
+        "automation_smb_uam",
+        "automation_sensitivity_limits",
+        "meal_bolus_strategy",
+        "meal_ecarbs_absorption"
+      ],
+      "data_gaps": "The single most useful missing observation is one meal trace with exact carb entry, bolus timestamp, and 6-hour CGM response, ideally during a stable trend window."
+    }
+  ],
+  "strengths": [
+    {
+      "area": "data_quality",
+      "title": "High-quality CGM coverage",
+      "description": "Coverage is 98.7% with no invalid or duplicate entries, so the glucose pattern is trustworthy enough for review."
+    },
+    {
+      "area": "profile",
+      "title": "Internally coherent selected profile",
+      "description": "Basal, CR, ISF, DIA, SMB, and target segments are all present and usable as the authoritative selected configuration."
+    },
+    {
+      "area": "automation",
+      "title": "Closed-loop automation is active and consistent",
+      "description": "SMB and UAM are enabled, dynamic sensitivity is active, and safety ceilings are not being reached in the observed data."
+    },
+    {
+      "area": "glucose_pattern",
+      "title": "Clear time-of-day structure",
+      "description": "The package shows a reproducible overnight low tendency and a daytime rise tendency, which is useful for prioritizing later verification."
+    }
+  ],
+  "issues": [
+    {
+      "area": "safety",
+      "title": "Recurrent hypoglycemia",
+      "description": "Low glucose appears repeatedly overnight and late evening, with multiple readings in the low 40s mg/dL. This limits how aggressive any change can be."
+    },
+    {
+      "area": "safety",
+      "title": "Recurrent daytime hyperglycemia",
+      "description": "Late morning to mid-afternoon glucose rises are persistent, with peaks into the high 200s mg/dL."
+    },
+    {
+      "area": "confounding",
+      "title": "Meal attribution is weak",
+      "description": "There are no carb treatment entries or meal-linked response traces, so meal coverage cannot be separated from basal or automation effects."
+    },
+    {
+      "area": "automation",
+      "title": "Active SMB/UAM may amplify both good and bad predictions",
+      "description": "The automation stack is active enough that any profile mismatch or overcorrection can be expressed quickly through SMBs and dynamic sensitivity."
+    }
+  ],
+  "recommendations": [
+    {
+      "area": "profile",
+      "title": "Keep the current profile and verify with one focused test",
+      "priority": "high",
+      "description": "The current data do not separate basal, CR, ISF, DIA, and automation effects well enough to justify a profile change. Keep the current profile unchanged and verify the overnight low tendency versus the daytime rise with one carefully documented observation window.",
+      "suggested_change": {
+        "decision": "keep",
+        "scope": "profile"
+      }
+    },
+    {
+      "area": "automation",
+      "title": "Do not change SMB or sensitivity settings yet",
+      "priority": "medium",
+      "description": "SMB/UAM and dynamic sensitivity are active but not clearly inconsistent. Changing them now would mix dependent variables before the underlying pattern is separated.",
+      "suggested_change": {
+        "decision": "keep",
+        "scope": "aaps"
+      }
+    },
+    {
+      "area": "meal_strategy",
+      "title": "Use conservative meal handling until meal-linked evidence exists",
+      "priority": "medium",
+      "description": "Because there is no carb-linked evidence, avoid trying to tune prebolus, immediate-bolus percentage, or e-carbs from this package alone.",
+      "suggested_change": {
+        "decision": "keep",
+        "scope": "meal_strategy"
+      }
+    }
+  ],
+  "profile_recommendation": {
+    "focus": "basal",
+    "decision": "keep",
+    "recommendation": "Keep the current basal profile unchanged for now, and verify it with one meal-free overnight observation or one well-documented daytime comparison window before considering any basal change.",
+    "rationale": "The overnight lows and daytime highs are real, but the package does not separate basal from meal, correction, or automation effects. Because lows are already present, changing basal now would be unsafe without better isolation of cause.",
+    "confidence": "medium",
+    "next_check": "Review one interval with exact timestamps for any meal, correction, temp target, and glucose response, then compare that single window against the surrounding basal trend."
+  },
+  "parameter_decisions": [
+    {
+      "parameter_key": "profile.basal.00_00",
+      "parameter": "Profile / basal 00:00",
+      "current_value": "0.6 U/h",
+      "suggested_value": "0.6 U/h",
+      "decision": "keep",
+      "rationale": "Overnight lows are present, but the package does not isolate basal from SMB, correction, or delayed meal effects. A basal change is not supported without a cleaner fasting window."
+    },
+    {
+      "parameter_key": "profile.basal.05_00",
+      "parameter": "Profile / basal 05:00",
+      "current_value": "0.7 U/h",
+      "suggested_value": "0.7 U/h",
+      "decision": "keep",
+      "rationale": "Early-morning data are not clearly a basal excess problem, and the evidence remains confounded by overall overnight variability and automation activity."
+    },
+    {
+      "parameter_key": "profile.basal.06_00",
+      "parameter": "Profile / basal 06:00",
+      "current_value": "0.8 U/h",
+      "suggested_value": "0.8 U/h",
+      "decision": "keep",
+      "rationale": "The morning rise begins later and could reflect meals or rising insulin needs, but the package does not separate those from basal. A change is unsupported."
+    },
+    {
+      "parameter_key": "profile.basal.10_00",
+      "parameter": "Profile / basal 10:00",
+      "current_value": "0.7 U/h",
+      "suggested_value": "0.7 U/h",
+      "decision": "keep",
+      "rationale": "Late morning hyperglycemia is visible, but it is plausibly meal-related and heavily confounded by corrections and automation. No isolated basal evidence supports a change."
+    },
+    {
+      "parameter_key": "profile.basal.16_00",
+      "parameter": "Profile / basal 16:00",
+      "current_value": "0.5 U/h",
+      "suggested_value": "0.5 U/h",
+      "decision": "keep",
+      "rationale": "The afternoon is the strongest high window, but the data do not separate basal deficiency from meal timing or dynamic sensitivity effects. Keep until a cleaner trace exists."
+    },
+    {
+      "parameter_key": "profile.basal.18_00",
+      "parameter": "Profile / basal 18:00",
+      "current_value": "0.6 U/h",
+      "suggested_value": "0.6 U/h",
+      "decision": "keep",
+      "rationale": "Late-evening lows are present, but the effect may come from correction or SMB stacking rather than basal alone. The evidence is insufficient for a basal change."
+    },
+    {
+      "parameter_key": "profile.basal.19_00",
+      "parameter": "Profile / basal 19:00",
+      "current_value": "0.7 U/h",
+      "suggested_value": "0.7 U/h",
+      "decision": "keep",
+      "rationale": "The pattern around 19:00 remains mixed and not separable from meal or automation effects. Changing this segment now would be premature."
+    },
+    {
+      "parameter_key": "profile.cr.00_00",
+      "parameter": "Profile / CR 00:00",
+      "current_value": "13 g/U",
+      "suggested_value": "13 g/U",
+      "decision": "keep",
+      "rationale": "There are no carb entries or meal-linked windows to test this ratio. The correction windows do not isolate CR."
+    },
+    {
+      "parameter_key": "profile.cr.04_00",
+      "parameter": "Profile / CR 04:00",
+      "current_value": "11.1 g/U",
+      "suggested_value": "11.1 g/U",
+      "decision": "keep",
+      "rationale": "No meal data exist to justify a CR change, and overnight/early-morning lows increase the risk of overcorrecting this segment."
+    },
+    {
+      "parameter_key": "profile.cr.08_00",
+      "parameter": "Profile / CR 08:00",
+      "current_value": "13.2 g/U",
+      "suggested_value": "13.2 g/U",
+      "decision": "keep",
+      "rationale": "The daytime rise could suggest meal coverage needs review, but no carb-linked evidence separates CR from basal or automation. Keep for now."
+    },
+    {
+      "parameter_key": "profile.cr.16_00",
+      "parameter": "Profile / CR 16:00",
+      "current_value": "10.5 g/U",
+      "suggested_value": "10.5 g/U",
+      "decision": "keep",
+      "rationale": "Afternoon highs exist, yet the package cannot separate a weak CR from rising insulin needs, late bolus timing, or dynamic sensitivity. No change is supported."
+    },
+    {
+      "parameter_key": "profile.cr.20_00",
+      "parameter": "Profile / CR 20:00",
+      "current_value": "12.6 g/U",
+      "suggested_value": "12.6 g/U",
+      "decision": "keep",
+      "rationale": "Evening lows and automation activity make it unsafe to intensify this segment without meal-linked evidence. The current data do not support a change."
+    },
+    {
+      "parameter_key": "profile.isf.00_00",
+      "parameter": "Profile / ISF 00:00",
+      "current_value": "56 mg/dL/U",
+      "suggested_value": "56 mg/dL/U",
+      "decision": "keep",
+      "rationale": "Correction responses are too confounded to estimate a better ISF. Dynamic sensitivity may already be affecting effective response, so a manual ISF change is unsupported."
+    },
+    {
+      "parameter_key": "profile.target.00_00",
+      "parameter": "Profile / target 00:00",
+      "current_value": "90 mg/dL",
+      "suggested_value": "90 mg/dL",
+      "decision": "keep",
+      "rationale": "The overnight lows argue against lowering targets, and there is not enough evidence to justify raising them as a profile fix."
+    },
+    {
+      "parameter_key": "profile.target.08_00",
+      "parameter": "Profile / target 08:00",
+      "current_value": "100 mg/dL",
+      "suggested_value": "100 mg/dL",
+      "decision": "keep",
+      "rationale": "The daytime highs are real, but the package does not show that the target is the main cause. A target change would be a dependent move that is not yet supported."
+    },
+    {
+      "parameter_key": "profile.target.23_00",
+      "parameter": "Profile / target 23:00",
+      "current_value": "90 mg/dL",
+      "suggested_value": "90 mg/dL",
+      "decision": "keep",
+      "rationale": "Late-evening lows make it unsafe to tighten this target, and the current data do not justify a target revision."
+    },
+    {
+      "parameter_key": "profile.dia",
+      "parameter": "Profile / DIA",
+      "current_value": "10 h",
+      "suggested_value": "10 h",
+      "decision": "keep",
+      "rationale": "The correction windows are confounded by SMB, temp basals, and likely meals, so DIA cannot be independently validated. No supported change exists."
+    },
+    {
+      "parameter_key": "aaps.core.smb_uam",
+      "parameter": "AAPS / SMB and UAM",
+      "current_value": "smb_enabled=true; uam_enabled=true",
+      "suggested_value": "smb_enabled=true; uam_enabled=true",
+      "decision": "keep",
+      "rationale": "SMB/UAM is active and internally consistent. The evidence does not support changing these core modes before separating basal and meal effects."
+    },
+    {
+      "parameter_key": "aaps.core.smb_activation",
+      "parameter": "AAPS / SMB activation conditions",
+      "current_value": "smb_always_enabled=true; smb_with_cob_enabled=false; smb_after_carbs_enabled=false; smb_with_temp_target_enabled=true; smb_with_high_temp_target_enabled=false",
+      "suggested_value": "smb_always_enabled=true; smb_with_cob_enabled=false; smb_after_carbs_enabled=false; smb_with_temp_target_enabled=true; smb_with_high_temp_target_enabled=false",
+      "decision": "keep",
+      "rationale": "The activation rules are coherent with the observed closed-loop behavior. They may contribute to low risk if predictions are optimistic, but the package does not isolate a setting fault."
+    },
+    {
+      "parameter_key": "aaps.core.smb_delivery",
+      "parameter": "AAPS / SMB strength and frequency",
+      "current_value": "smb_interval_minutes=3 min; max_smb_basal_minutes=15 min; max_uam_smb_basal_minutes=20 min",
+      "suggested_value": "smb_interval_minutes=3 min; max_smb_basal_minutes=15 min; max_uam_smb_basal_minutes=20 min",
+      "decision": "keep",
+      "rationale": "The cadence is tight, but there is no evidence that the interval or minute caps are misconfigured. Remaining time in an SMB waiting message is not the configured SMB interval."
+    },
+    {
+      "parameter_key": "aaps.core.safety_limits",
+      "parameter": "AAPS / max basal and max IOB limits",
+      "current_value": "max_basal_u_per_hour=12 U/h; max_iob_units=25 U",
+      "suggested_value": "max_basal_u_per_hour=12 U/h; max_iob_units=25 U",
+      "decision": "keep",
+      "rationale": "Observed dosing does not approach these ceilings, so they are not the active source of the glucose pattern and do not require adjustment."
+    },
+    {
+      "parameter_key": "aaps.core.sensitivity",
+      "parameter": "AAPS / Autosens and Dynamic ISF",
+      "current_value": "autosens_enabled=false; dynamic_sensitivity_enabled=true; autosens_raises_target=false; autosens_lowers_target=false; dynamic_isf_adjustment_factor_percent=70 %",
+      "suggested_value": "autosens_enabled=false; dynamic_sensitivity_enabled=true; autosens_raises_target=false; autosens_lowers_target=false; dynamic_isf_adjustment_factor_percent=70 %",
+      "decision": "keep",
+      "rationale": "A sensitivity_ratio near 1 is neutral, not evidence of disabled Autosens. Dynamic ISF may be compensating for profile or meal effects, but the package does not justify changing it separately."
+    },
+    {
+      "parameter_key": "aaps.core.carb_absorption",
+      "parameter": "AAPS / carbohydrate absorption model",
+      "current_value": "min_5m_carbimpact=8 mg/dL/5 min; meal_max_absorption_hours=7 h",
+      "suggested_value": "min_5m_carbimpact=8 mg/dL/5 min; meal_max_absorption_hours=7 h",
+      "decision": "keep",
+      "rationale": "There are no carb entries or extended-carb records to validate absorption behavior against. No evidence supports changing this model now."
+    }
+  ],
+  "meal_strategy_summary": {
+    "suggestion": "Keep meal bolusing conservative: use only a modest prebolus when the trend is stable, avoid increasing immediate bolus percentage without meal-linked evidence, let SMB/UAM cover the residual rise, and do not use e-carbs routinely from this package alone.",
+    "rationale": "There is no carb treatment history, no declared per-meal strategy to validate, and the correction windows are confounded by IOB, temp basals, and active automation. The recurrent low risk makes aggressive front-loading unsafe without a cleaner meal trace.",
+    "confidence": "low",
+    "next_observation": "Record one meal with exact carb entry, bolus timestamp, and 6-hour CGM response while noting any SMB, temp target, and correction activity.",
+    "exceptions": [
+      {
+        "pattern": "Late-morning to mid-afternoon meals with a stable starting trend and low active IOB",
+        "suggestion": "If a recurring pattern is confirmed later, prebolus may need to be slightly earlier than current practice.",
+        "rationale": "This is the only time band that repeatedly shows upward drift, but the current package does not isolate it from other causes."
+      },
+      {
+        "pattern": "Meals near overnight or late-evening low-risk windows, especially with active IOB",
+        "suggestion": "Keep bolusing more conservative and do not add routine e-carbs.",
+        "rationale": "The package shows recurrent lows in these windows, so additional upfront insulin would increase safety risk."
+      }
+    ]
+  },
+  "implementation_steps": [
+    {
+      "step": 1,
+      "title": "Keep the profile unchanged",
+      "description": "Do not change basal, CR, ISF, DIA, targets, or safety ceilings yet. The current evidence does not separate the drivers cleanly enough."
+    },
+    {
+      "step": 2,
+      "title": "Keep automation unchanged",
+      "description": "Leave SMB, UAM, and dynamic sensitivity as they are for now because the evidence does not show a clear automation fault."
+    },
+    {
+      "step": 3,
+      "title": "Collect one clean meal-linked trace",
+      "description": "Use one documented meal or one meal-free observation window with timestamps for carbs, bolus, temp target, SMB activity, and 6-hour CGM response."
+    },
+    {
+      "step": 4,
+      "title": "Reassess one dependent area at a time",
+      "description": "Only after a clearer trace exists, review basal or meal strategy first, then automation, and avoid changing dependent settings together."
+    }
+  ],
+  "education": [
+    {
+      "topic": "Why mixed highs and lows matter",
+      "description": "When lows and highs both recur, a single setting change can improve one window while worsening another. That is why the safest response is to isolate the cause before changing settings."
+    },
+    {
+      "topic": "Why SMB and UAM are not the same as meal confirmation",
+      "description": "SMB/UAM can respond to predicted needs, but without carb entries they cannot prove meal size or timing."
+    },
+    {
+      "topic": "Why a neutral sensitivity_ratio matters",
+      "description": "A sensitivity_ratio near 1 means the current adjustment is neutral, not that Autosens is disabled."
+    },
+    {
+      "topic": "Why e-carbs need meal-linked evidence",
+      "description": "E-carbs should be based on a documented slow-absorption pattern, not on aggregate glucose patterns alone."
+    }
+  ],
+  "safety_notes": [
+    {
+      "note": "This is decision-support content only; the user must independently verify every proposed change."
+    },
+    {
+      "note": "Make changes one at a time and monitor glucose closely after any change."
+    },
+    {
+      "note": "Because lows recur in the data, avoid making multiple dependent insulin-delivery changes together."
+    },
+    {
+      "note": "If there is any severe or symptomatic hypoglycemia, follow local emergency guidance and the care plan rather than relying on profile tuning."
+    }
+  ]
+}

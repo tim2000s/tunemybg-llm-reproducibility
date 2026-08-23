@@ -1,0 +1,407 @@
+{
+  "summary": "The 14-day analysis shows an average glucose of 121.6 mg/dL, time-in-range 86.0%, but also significant hypoglycemia (lowest 41 mg/dL, overnight TBR up to 18.5%) and post-meal hyperglycemia (TAR up to 32.1%). The primary driver is an overly aggressive dynamic ISF adjustment (70% factor) that reduces effective ISF to as low as 2.1 mg/dL/U, causing severe over-correction via SMB/UAM. This leads to IOB stacking and recurrent hypoglycemia, particularly overnight. Adding to this risk, UAM interprets unlogged meals as large carb influxes, further amplifying insulin delivery. The profile basal, CR, ISF, and targets appear reasonable but cannot be accurately evaluated because the automation overrides them. The absence of any carbohydrate entries prevents direct meal-strategy assessment. A safe plan is to: (1) immediately reduce the dynamic ISF factor to 0% and set safety caps (max IOB 5 U, max basal 4 U/h) to block extreme insulin stacking, (2) disable UAM, (3) begin systematic meal logging, and (4) re-assess DIA and profile settings when stable data becomes available. This addresses the most urgent safety hazard while preserving loop control.",
+  "analysis_steps": [
+    {
+      "key": "data_quality",
+      "status": "completed",
+      "confidence": "high",
+      "findings": "CGM coverage 98.7%, 3995 valid entries, 10 gaps (largest 65 min), 0 invalid duplicates. 655 insulin records, 2315 total treatments. No carbohydrate entries. Loop telemetry is dense and covers representative decisions. The active AAPS profile is complete with all required segments. Data quality is sufficient for basal and safety analysis, but the complete lack of carb logs severely limits meal-strategy evaluation.",
+      "evidence": "telemetry.counts: entries 3995, treatments 2315, insulin entries 655. data_quality: coverage 98.7%, gap_count 10, valid_entry_count 3995. treatment_summary: carb_entries 0, total_carbs_g 0.0. representative_loop_statuses available.",
+      "dependencies": [],
+      "data_gaps": "No carbohydrate entries, no exercise or illness markers, no user-reported hypoglycemia symptoms. The 65-minute gap may hide brief events but unlikely to distort overnight trends."
+    },
+    {
+      "key": "safety_overview",
+      "status": "completed",
+      "confidence": "high",
+      "findings": "Overall TIR 86.0%, but significant hypoglycemia: lowest glucose 41 mg/dL (multiple episodes), overnight TBR up to 18.5%. Hyperglycemia peaks up to 293 mg/dL, with post-meal TAR 7.5-32.1%. Variability CV 32.6%. Any further insulin increase must first stabilize overnight lows. The safety constraint is that the loop's own aggressive SMB/UAM under dynamic ISF is the primary cause of both the highs and the subsequent severe lows.",
+      "evidence": "glucose_extremes: 41, 42, 47 mg/dL lows; 293, 290 mg/dL highs. hourly_glucose_local: hour 1 TBR 18.5%, hour 19 TBR 15.3%, hour 16 TAR 32.1%. glucose_summary: average 121.6, SD 39.7, CV 32.6%, TIR 86.0, TAR 8.9, TBR 5.1.",
+      "dependencies": [
+        "data_quality"
+      ],
+      "data_gaps": "No carb logs, no exercise or illness markers, no symptom reports."
+    },
+    {
+      "key": "basal_targets",
+      "status": "partial",
+      "confidence": "medium",
+      "findings": "Overnight hypoglycemia is prominent from 00:00-02:00 local (TBR 11.4-18.5%), corresponding to target 90 mg/dL and basal 0.6-0.7 U/h. The loop frequently sets zero temps overnight, but lows persist, suggesting IOB from daytime corrections/SMB carries over. DIA 10 h prolongs IOB decay, potentially a major contributor. Daytime basal adequacy cannot be assessed without meal data. Basal segments themselves are not clearly mis-scaled, but the automation's IOB accumulation masks any true basal need.",
+      "evidence": "hourly_glucose_local: hours 0-2 TBR and averages. representative_loop_statuses: 10-Aug 02:46 zero rate, 11-Aug 00:11 zero rate, 14-Aug 03:55 0.87 U/h with low BG. therapy_response_windows show large BG drops after evening corrections.",
+      "dependencies": [
+        "safety_overview"
+      ],
+      "data_gaps": "No carb logs, no activity data, no insulin duration test."
+    },
+    {
+      "key": "profile_cr_isf_dia",
+      "status": "partial",
+      "confidence": "low",
+      "findings": "CR cannot be validated: 0 carb entries. ISF profile 56 mg/dL/U is reasonable but the automation's dynamic ISF overrides it drastically (effective ISF 2-3 mg/dL/U). DIA 10 h may be too long given the loop's IOB behavior and hypoglycemia, but evidence is indirect because of dynamic ISF interference. No change to CR or ISF is warranted now; DIA might be shortened later but only after dynamic ISF is neutralized and data with meal logging is available. The GLP-1 note complicates ISF and DIA interpretation.",
+      "evidence": "aaps_profile: CR segments, ISF 56, DIA 10. therapy_response_windows: large corrections with prolonged effect. representative_loop_statuses: extreme variable_sens values (2.4-3.0) during rises.",
+      "dependencies": [
+        "basal_targets",
+        "safety_overview"
+      ],
+      "data_gaps": "No carb data, no insulin duration test, limited GLP-1 impact data."
+    },
+    {
+      "key": "automation_smb_uam",
+      "status": "completed",
+      "confidence": "high",
+      "findings": "SMB always on, 3-min interval, up to 20 min UAM basal. Combined with the severely amplified dynamic ISF, SMBs stack rapidly, causing massive IOB. UAM misinterprets unlogged meals as large carb influxes, fueling further SMBs. The loop then sets zero temps to prevent lows, but IOB from prior stacking persists, leading to hypoglycemia. UAM is currently unsafe and should be disabled while meal logging is established.",
+      "evidence": "representative_loop_statuses: Microbolusing events with SMB equals 0.3U, 0.4U, etc. therapy_response_windows show rapid falls. smb_settings: smb_always_enabled=true, interval=3 min, max_uam_smb_basal_minutes=20.",
+      "dependencies": [
+        "safety_overview",
+        "basal_targets",
+        "profile_cr_isf_dia"
+      ],
+      "data_gaps": "No carb entries to distinguish UAM-triggered from meal-coverage SMBs."
+    },
+    {
+      "key": "automation_sensitivity_limits",
+      "status": "completed",
+      "confidence": "high",
+      "findings": "The dynamic ISF adjustment factor of 70% is the dominant safety hazard. It leads to effective ISF as low as 2.1 mg/dL/U, resulting in insulin delivery 10-30 times stronger than profile ISF. This causes severe over-correction and hypoglycemia. The max IOB 25 U and max basal 12 U/h remove any automated safety ceiling. Immediate reduction of dynamic_isf_adjustment_factor_percent to 0% and lowering max IOB to 5 U and max basal to 4 U/h are essential safety actions.",
+      "evidence": "representative_loop_statuses: variable_sens 37.9-53.4, ISF 2.1-3.0 in reason text. therapy_response_windows: BG falls of 125-178 mg/dL per 0.2-0.65 U. smb_settings: dynamic_isf_adjustment_factor_percent=70, max_iob_units=25, max_basal_u_per_hour=12.",
+      "dependencies": [
+        "safety_overview",
+        "basal_targets",
+        "profile_cr_isf_dia",
+        "automation_smb_uam"
+      ],
+      "data_gaps": "No meal data to test if dynamic ISF would behave acceptably with carb logging; GLP-1 may influence sensitivity."
+    },
+    {
+      "key": "meal_bolus_strategy",
+      "status": "partial",
+      "confidence": "low",
+      "findings": "No carb entries exist, so meal bolus strategy cannot be evaluated. Post-meal spikes and subsequent crashes suggest that UAM and dynamic ISF are handling meals, but dangerously. A manual meal-bolus strategy should be introduced after UAM is disabled and dynamic ISF neutralized. Starting with prebolus 15 min and 100% immediate bolus is a safe review direction, with SMB for fine-tuning only after stable carbohydrate logging is established.",
+      "evidence": "carb_treatment_entries: empty. therapy_response_windows: all correction boluses, no meal events. hourly_glucose_local: post-meal TAR.",
+      "dependencies": [
+        "basal_targets",
+        "profile_cr_isf_dia",
+        "automation_smb_uam",
+        "automation_sensitivity_limits"
+      ],
+      "data_gaps": "No carbohydrate logs."
+    },
+    {
+      "key": "meal_ecarbs_absorption",
+      "status": "partial",
+      "confidence": "low",
+      "findings": "No e-carb use declared or observed. The current absorption model (min_5m_carbimpact 8, meal_max_absorption_hours 7 h) may be too aggressive, especially with GLP-1, but evidence is indirect. E-carbs should not be introduced until basic meal-bolus response is understood with logged carbs and UAM disabled.",
+      "evidence": "aaps_profile.smb_settings: min_5m_carbimpact=8, meal_max_absorption_hours=7. representative_events: GLP-1 note.",
+      "dependencies": [
+        "meal_bolus_strategy",
+        "automation_smb_uam"
+      ],
+      "data_gaps": "No carb logs, no absorption curves."
+    },
+    {
+      "key": "synthesis_plan",
+      "status": "completed",
+      "confidence": "high",
+      "findings": "The hypohyperglycemia cycles are driven by a dangerously aggressive dynamic ISF (70% factor) that amplifies sensitivity to produce extremely low effective ISF, causing SMB/UAM over-delivery and severe lows. The long DIA and high IOB caps exacerbate the problem. No profile changes are justified now; instead, immediate automation safety changes are required: set dynamic_isf_adjustment_factor_percent to 0%, lower max IOB to 5 U and max basal to 4 U/h, and disable UAM. After these changes, systematic carbohydrate logging must begin. This sequential approach removes the primary hazard, allows the user to provide the missing data, and then enables accurate profile tuning (especially DIA) in a safe manner.",
+      "evidence": "Integrated from all prior stages: extreme variable_sens values, corresponding BG crashes, zero temps failing to prevent lows, absence of carb data, profile values unchanged.",
+      "dependencies": [
+        "data_quality",
+        "safety_overview",
+        "basal_targets",
+        "profile_cr_isf_dia",
+        "automation_smb_uam",
+        "automation_sensitivity_limits",
+        "meal_bolus_strategy",
+        "meal_ecarbs_absorption"
+      ],
+      "data_gaps": "Carb logs, insulin duration test, GLP-1 effect quantification."
+    }
+  ],
+  "strengths": [
+    "CGM coverage is excellent (98.7%), providing a high-quality dataset.",
+    "Loop telemetry is dense and captures detailed automation decisions.",
+    "The active AAPS profile is well-defined and all segments are set.",
+    "Overall TIR is 86.0%, indicating generally good glucose control when not extreme.",
+    "The loop is capable of detecting impending lows and setting zero temps, showing functional safety mechanisms."
+  ],
+  "issues": [
+    "Severe hypoglycemia (lowest 41 mg/dL) linked to dynamic ISF over-amplification.",
+    "Overnight lows are frequent (up to 18.5% TBR) due to IOB carryover.",
+    "Dynamic ISF adjustment factor 70% causes effective ISF drop to 2-3 mg/dL/U, leading to massive insulin stacking.",
+    "UAM misinterprets unlogged meals, triggering dangerous SMB boluses.",
+    "Max IOB (25 U) and max basal (12 U/h) are far too high, effectively removing safety caps.",
+    "Complete absence of carbohydrate logging prevents meal strategy and CR assessment.",
+    "The DIA of 10 h may be too long, but cannot be confirmed without an insulin duration test."
+  ],
+  "recommendations": [
+    {
+      "area": "automation_sensitivity_limits",
+      "title": "Immediately disable dynamic ISF by setting adjustment factor to 0%",
+      "priority": "safety",
+      "description": "Set dynamic_isf_adjustment_factor_percent to 0% to stop the dangerous over-amplification of insulin sensitivity. This will prevent the loop from calculating effective ISF values below a safe floor, eliminating the root cause of severe hypoglycemia. Keep dynamic_sensitivity_enabled=true to preserve the ability to reactivate later with a safer factor.",
+      "suggested_change": {
+        "dynamic_isf_adjustment_factor_percent": "0 %"
+      }
+    },
+    {
+      "area": "automation_smb_uam",
+      "title": "Disable UAM to stop misinterpretation of unlogged meals",
+      "priority": "safety",
+      "description": "Set uam_enabled to false. Without carbohydrate logging, UAM misinterprets rising glucose as large carb influxes, driving excessive SMB delivery. Disabling it eliminates this source of insulin over-delivery while the user begins meal logging.",
+      "suggested_change": {
+        "uam_enabled": "false"
+      }
+    },
+    {
+      "area": "aaps_safety_limits",
+      "title": "Reduce max IOB to 5 U and max basal to 4 U/h as immediate safety caps",
+      "priority": "safety",
+      "description": "The current max IOB of 25 U and max basal of 12 U/h provide no effective limit on SMB stacking. Setting max_iob_units to 5 U and max_basal_u_per_hour to 4 U/h will create safe ceilings that prevent excessive insulin accumulation during any future SMB or temp basal activity.",
+      "suggested_change": {
+        "max_iob_units": "5 U",
+        "max_basal_u_per_hour": "4 U/h"
+      }
+    },
+    {
+      "area": "meal_strategy",
+      "title": "Begin logging all carbohydrates to enable accurate CR and meal-bolus assessment",
+      "priority": "high",
+      "description": "Systematic carbohydrate logging is essential to distinguish meal-related glucose excursions from automation artifacts. After the automation safety changes, log meals for at least 7 days with prebolus 15 min and 100% immediate bolus. This will provide the data needed to evaluate CR, DIA, and UAM suitability.",
+      "suggested_change": null
+    }
+  ],
+  "profile_recommendation": {
+    "focus": "dia",
+    "decision": "keep",
+    "recommendation": "Keep DIA at 10 hours for now, but plan to verify with an insulin duration test after automation safety changes and meal logging are established.",
+    "rationale": "The very long DIA may be contributing to IOB carryover and overnight lows, but the current evidence is confounded by the extreme dynamic ISF aggression. Without an insulin duration test, changing DIA is unsafe.",
+    "confidence": "low",
+    "next_check": "Perform an insulin duration test (e.g., following a corrected bolus during a fasting period with no IOB) once dynamic ISF is neutralized and meal logging is consistent."
+  },
+  "parameter_decisions": [
+    {
+      "parameter_key": "profile.basal.00_00",
+      "parameter": "Profile / basal 00:00",
+      "current_value": "0.6 U/h",
+      "suggested_value": "0.6 U/h",
+      "decision": "keep",
+      "rationale": "No direct evidence of basal rate error; overnight lows are primarily caused by automation-driven IOB, not basal over-delivery. Keep current value and reassess after automation changes."
+    },
+    {
+      "parameter_key": "profile.basal.05_00",
+      "parameter": "Profile / basal 05:00",
+      "current_value": "0.7 U/h",
+      "suggested_value": "0.7 U/h",
+      "decision": "keep",
+      "rationale": "No evidence of basal rate error; keep until stable automation data with carb logs allow evaluation."
+    },
+    {
+      "parameter_key": "profile.basal.06_00",
+      "parameter": "Profile / basal 06:00",
+      "current_value": "0.8 U/h",
+      "suggested_value": "0.8 U/h",
+      "decision": "keep",
+      "rationale": "No evidence of basal rate error; daytime behavior is masked by automation."
+    },
+    {
+      "parameter_key": "profile.basal.10_00",
+      "parameter": "Profile / basal 10:00",
+      "current_value": "0.7 U/h",
+      "suggested_value": "0.7 U/h",
+      "decision": "keep",
+      "rationale": "No evidence of basal rate error."
+    },
+    {
+      "parameter_key": "profile.basal.16_00",
+      "parameter": "Profile / basal 16:00",
+      "current_value": "0.5 U/h",
+      "suggested_value": "0.5 U/h",
+      "decision": "keep",
+      "rationale": "No evidence of basal rate error."
+    },
+    {
+      "parameter_key": "profile.basal.18_00",
+      "parameter": "Profile / basal 18:00",
+      "current_value": "0.6 U/h",
+      "suggested_value": "0.6 U/h",
+      "decision": "keep",
+      "rationale": "No evidence of basal rate error."
+    },
+    {
+      "parameter_key": "profile.basal.19_00",
+      "parameter": "Profile / basal 19:00",
+      "current_value": "0.7 U/h",
+      "suggested_value": "0.7 U/h",
+      "decision": "keep",
+      "rationale": "No evidence of basal rate error."
+    },
+    {
+      "parameter_key": "profile.cr.00_00",
+      "parameter": "Profile / CR 00:00",
+      "current_value": "13 g/U",
+      "suggested_value": "13 g/U",
+      "decision": "keep",
+      "rationale": "CR cannot be validated without carb entries. Keep current value and await meal logging."
+    },
+    {
+      "parameter_key": "profile.cr.04_00",
+      "parameter": "Profile / CR 04:00",
+      "current_value": "11.1 g/U",
+      "suggested_value": "11.1 g/U",
+      "decision": "keep",
+      "rationale": "No carb data."
+    },
+    {
+      "parameter_key": "profile.cr.08_00",
+      "parameter": "Profile / CR 08:00",
+      "current_value": "13.2 g/U",
+      "suggested_value": "13.2 g/U",
+      "decision": "keep",
+      "rationale": "No carb data."
+    },
+    {
+      "parameter_key": "profile.cr.16_00",
+      "parameter": "Profile / CR 16:00",
+      "current_value": "10.5 g/U",
+      "suggested_value": "10.5 g/U",
+      "decision": "keep",
+      "rationale": "No carb data."
+    },
+    {
+      "parameter_key": "profile.cr.20_00",
+      "parameter": "Profile / CR 20:00",
+      "current_value": "12.6 g/U",
+      "suggested_value": "12.6 g/U",
+      "decision": "keep",
+      "rationale": "No carb data."
+    },
+    {
+      "parameter_key": "profile.isf.00_00",
+      "parameter": "Profile / ISF 00:00",
+      "current_value": "56 mg/dL/U",
+      "suggested_value": "56 mg/dL/U",
+      "decision": "keep",
+      "rationale": "Profile ISF is reasonable but is currently overridden by dynamic ISF. No change needed; automation fix will restore proper scaling."
+    },
+    {
+      "parameter_key": "profile.target.00_00",
+      "parameter": "Profile / target 00:00",
+      "current_value": "90 mg/dL",
+      "suggested_value": "90 mg/dL",
+      "decision": "keep",
+      "rationale": "Overnight lows are not due to target being too low; they are caused by excessive IOB. Keep target."
+    },
+    {
+      "parameter_key": "profile.target.08_00",
+      "parameter": "Profile / target 08:00",
+      "current_value": "100 mg/dL",
+      "suggested_value": "100 mg/dL",
+      "decision": "keep",
+      "rationale": "Daytime target is appropriate."
+    },
+    {
+      "parameter_key": "profile.target.23_00",
+      "parameter": "Profile / target 23:00",
+      "current_value": "90 mg/dL",
+      "suggested_value": "90 mg/dL",
+      "decision": "keep",
+      "rationale": "Evening target is fine."
+    },
+    {
+      "parameter_key": "profile.dia",
+      "parameter": "Profile / DIA",
+      "current_value": "10 h",
+      "suggested_value": "10 h",
+      "decision": "keep",
+      "rationale": "Evidence suggests DIA may be too long, but confounded by dynamic ISF. Keep until verified with an insulin duration test after automation changes."
+    },
+    {
+      "parameter_key": "aaps.core.smb_uam",
+      "parameter": "AAPS / SMB and UAM",
+      "current_value": "smb_enabled=true; uam_enabled=true",
+      "suggested_value": "smb_enabled=true; uam_enabled=false",
+      "decision": "change",
+      "rationale": "UAM is currently dangerous because it misinterprets unlogged meals and feeds over-aggressive SMB under dynamic ISF. Disabling UAM is a safety requirement while meal logging is established. SMB remains enabled for correction boluses."
+    },
+    {
+      "parameter_key": "aaps.core.smb_activation",
+      "parameter": "AAPS / SMB activation conditions",
+      "current_value": "smb_always_enabled=true; smb_with_cob_enabled=false; smb_after_carbs_enabled=false; smb_with_temp_target_enabled=true; smb_with_high_temp_target_enabled=false",
+      "suggested_value": "smb_always_enabled=true; smb_with_cob_enabled=false; smb_after_carbs_enabled=false; smb_with_temp_target_enabled=true; smb_with_high_temp_target_enabled=false",
+      "decision": "keep",
+      "rationale": "Current activation conditions are acceptable once UAM is off. smb_after_carbs could be enabled later when meals are logged. No safety concern with the current settings given other safeties in place."
+    },
+    {
+      "parameter_key": "aaps.core.smb_delivery",
+      "parameter": "AAPS / SMB strength and frequency",
+      "current_value": "smb_interval_minutes=3 min; max_smb_basal_minutes=15 min; max_uam_smb_basal_minutes=20 min",
+      "suggested_value": "smb_interval_minutes=3 min; max_smb_basal_minutes=15 min; max_uam_smb_basal_minutes=20 min",
+      "decision": "keep",
+      "rationale": "Delivery strength is aggressive but will be limited by the new max IOB and max basal caps. With dynamic ISF neutralized and UAM off, SMB sizes will be much smaller and safer."
+    },
+    {
+      "parameter_key": "aaps.core.safety_limits",
+      "parameter": "AAPS / max basal and max IOB limits",
+      "current_value": "max_basal_u_per_hour=12 U/h; max_iob_units=25 U",
+      "suggested_value": "max_basal_u_per_hour=4 U/h; max_iob_units=5 U",
+      "decision": "change",
+      "rationale": "Current limits are far too high, allowing dangerous IOB stacking. Lowering max basal to 4 U/h and max IOB to 5 U creates safe ceilings that prevent massive insulin accumulation. These values are sufficient to cover any likely correction need."
+    },
+    {
+      "parameter_key": "aaps.core.sensitivity",
+      "parameter": "AAPS / Autosens and Dynamic ISF",
+      "current_value": "autosens_enabled=false; dynamic_sensitivity_enabled=true; autosens_raises_target=false; autosens_lowers_target=false; dynamic_isf_adjustment_factor_percent=70 %",
+      "suggested_value": "autosens_enabled=false; dynamic_sensitivity_enabled=true; autosens_raises_target=false; autosens_lowers_target=false; dynamic_isf_adjustment_factor_percent=0 %",
+      "decision": "change",
+      "rationale": "Dynamic ISF with 70% adjustment factor is causing dangerous over-amplification of insulin sensitivity. Setting the factor to 0% effectively disables dynamic ISF, stopping the extreme sensitivity adjustments. Keep dynamic_sensitivity_enabled=true to allow future re-evaluation with a smaller factor once data supports it."
+    },
+    {
+      "parameter_key": "aaps.core.carb_absorption",
+      "parameter": "AAPS / carbohydrate absorption model",
+      "current_value": "min_5m_carbimpact=8 mg/dL/5 min; meal_max_absorption_hours=7 h",
+      "suggested_value": "min_5m_carbimpact=8 mg/dL/5 min; meal_max_absorption_hours=7 h",
+      "decision": "keep",
+      "rationale": "Absorption model may be too aggressive and contributing to UAM overestimation, but without carb logs it is speculative. Keep as is; after meal logging and UAM re-evaluation, this can be assessed."
+    }
+  ],
+  "meal_strategy_summary": {
+    "suggestion": "Temporarily disable UAM. Begin systematic carbohydrate logging for all meals and snacks. Adopt a prebolus of approximately 15 minutes before eating and deliver 100% of the meal bolus immediately. Use SMB with the current activation settings (smb_always_enabled) for correction needs, but rely on manual carb entries rather than UAM. Do not use e-carbs at this stage. After 1–2 weeks of stable data with the automation safety changes (dynamic ISF at 0%, max IOB 5 U, max basal 4 U/h), review meal responses to determine if CR, meal timing, or SMB adjustments are needed. E-carbs may be considered later only if a clear pattern of slow absorption emerges.",
+    "rationale": "The current pattern of post-meal highs followed by severe lows is driven by UAM over-reacting under an extremely amplified dynamic ISF. Removing UAM and logging meals will provide clean data to identify the real insulin-to-carb needs. A fixed 15-minute prebolus and 100% immediate bolus is a safe, predictable starting point that reduces the demand on SMB/UAM. The aggressive absorption model settings are not being changed now because their effect cannot be isolated until meal logging is in place.",
+    "confidence": "low",
+    "next_observation": "After the automation safety changes and at least 7 days of consistent meal logging (including carb amounts and bolus timing), review the 2-hour and 4-hour post-meal glucose curves to assess CR accuracy and the need for SMB adjustments.",
+    "exceptions": []
+  },
+  "implementation_steps": [
+    {
+      "step": 1,
+      "description": "Immediately change AAPS settings: set dynamic_isf_adjustment_factor_percent to 0%, uam_enabled to false, max_iob_units to 5 U, max_basal_u_per_hour to 4 U/h. Make these changes in one session but verify each independently. Monitor glucose closely for the next 24–48 hours."
+    },
+    {
+      "step": 2,
+      "description": "Begin logging all carbohydrate intake (grams) and bolus deliveries in Nightscout. Use a prebolus of 15 minutes before eating and deliver 100% of the meal insulin as a standard bolus (not split or extended). Do not use e-carbs."
+    },
+    {
+      "step": 3,
+      "description": "After 7 days of stable glucose with the new settings and meal logging, analyze the overnight glucose trend. If hypoglycemia persists, consider performing an insulin duration test (fasting correction bolus with no IOB) to verify the DIA of 10 hours."
+    },
+    {
+      "step": 4,
+      "description": "Once the DIA is verified, and meal logs show consistent patterns, evaluate whether SMB activation conditions (e.g., enabling smb_after_carbs) or a small basal segment adjustment (e.g., reducing 00:00–02:00 basal by 0.05 U/h) are needed. Make only one change at a time with 3–7 days of observation between changes."
+    },
+    {
+      "step": 5,
+      "description": "Only after stable meal coverage is achieved (TIR >85% with no severe hypoglycemia), consider re-enabling UAM with a low dynamic ISF factor (e.g., 30%) to help with unannounced meals, if needed."
+    }
+  ],
+  "education": [
+    "Dynamic ISF can magnify insulin resistance calculations based on glucose velocity and UAM; a high adjustment factor can lead to extreme insulin delivery on rapid rises.",
+    "UAM estimates unannounced carbohydrate absorption from positive glucose deviations; without accurate carb logging, it can overestimate meal size and cause insulin stacking.",
+    "The DIA setting determines how long the loop considers insulin as active; a value longer than actual duration causes the loop to believe IOB is still present, potentially delaying needed corrections or, conversely, preventing detection of IOB deficits.",
+    "Insulin stacking occurs when multiple small boluses (SMBs) are delivered close together, accumulating beyond the body's ability to clear them, leading to delayed severe hypoglycemia."
+  ],
+  "safety_notes": [
+    "All proposed changes are decision-support suggestions only. The user must verify each change independently, make one change at a time, and monitor glucose closely.",
+    "Disabling dynamic ISF and UAM will reduce insulin delivery overall; the user should be prepared to manually correct high glucose if needed, but must use caution with correction doses given the prior over-sensitivity.",
+    "Do not adjust basal, CR, ISF, or DIA until after the automation changes and meal logging are established and stable, to avoid introducing new variables.",
+    "Severe hypoglycemia (below 54 mg/dL) requires immediate treatment; the user should always have fast-acting glucose available and know how to respond."
+  ]
+}

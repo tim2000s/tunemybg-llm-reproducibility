@@ -1,0 +1,383 @@
+{
+  "summary": "Analysis of 14 days of Nightscout telemetry reveals overall solid glycemic control with a Time in Range (70-180 mg/dL) of 86.0% and an average glucose of 121.6 mg/dL. However, safety is compromised by high nocturnal hypoglycemia (10.1%-18.5% Time Below Range between 23:00 and 03:00) and substantial afternoon volatility (peak 32.1% Time Above Range at 16:00 followed by 15.3% Time Below Range at 19:00). Zero carbohydrates are logged in Nightscout, forcing AAPS Unannounced Meal (UAM) logic to manage all meal responses. Delayed gastric emptying from GLP-1 agonist therapy causes UAM to accumulate excessive insulin on late meal waves, leading to postprandial drop-offs. Disproportionately high AAPS safety ceilings (Max IOB 25 U, Max Basal 12 U/h) and an overnight target of 90 mg/dL compound these risks.",
+  "analysis_steps": [
+    {
+      "key": "data_quality",
+      "status": "completed",
+      "confidence": "high",
+      "findings": "CGM data coverage is excellent at 98.7% over 14 days with only 10 minor gaps (largest 65 min). Profile and AAPS settings are complete. Critical gap: complete absence of logged carbohydrate entries (0 g total), forcing total reliance on UAM automation.",
+      "evidence": "3,995 entries out of 4,046 expected; treatment_summary total_carbs_g = 0.0.",
+      "dependencies": [],
+      "data_gaps": "Lack of logged carb entries obscures direct evaluation of Carb Ratios (CR) and absorption durations."
+    },
+    {
+      "key": "safety_overview",
+      "status": "completed",
+      "confidence": "high",
+      "findings": "Overall Time Below Range (<70 mg/dL) is elevated at 5.1% (target <4.0%). Hypoglycemia is concentrated overnight (10.1%-18.5% TBR between 23:00-03:00) and early evening (15.3% TBR at 19:00). Severe lows down to 41 mg/dL recorded. Confounding factors include concurrent GLP-1 receptor agonist use (1.25 mg weekly) and pump occlusion events.",
+      "evidence": "glucose_summary TBR = 5.1%; hourly_glucose_local TBR at 01:00 = 18.5%, 19:00 = 15.3%; glucose_extremes include 41 mg/dL.",
+      "dependencies": [
+        "data_quality"
+      ],
+      "data_gaps": "None."
+    },
+    {
+      "key": "basal_targets",
+      "status": "completed",
+      "confidence": "high",
+      "findings": "Overnight glucose drifts downward against a 90 mg/dL target, leading to high low-exposure. Early morning/fasting window (05:00-09:00) is highly stable (TIR 95.2%-98.7%), confirming scheduled basal rates (0.7-0.8 U/h) are accurate when uninfluenced by meal IOB. Afternoon glucose swings are meal/UAM driven, not basal defects.",
+      "evidence": "hourly_glucose_local average glucose 05:00-07:00 is 99.5-104.2 mg/dL with <5% TBR; overnight TBR peaks at 18.5% at 01:00.",
+      "dependencies": [
+        "data_quality",
+        "safety_overview"
+      ],
+      "data_gaps": "None."
+    },
+    {
+      "key": "profile_cr_isf_dia",
+      "status": "partial",
+      "confidence": "medium",
+      "findings": "Profile ISF is flat at 56 mg/dL/U. Dynamic ISF reduces effective ISF down to 27.8 mg/dL/U during hyperglycemia, intensifying loop auto-dosing. DIA of 10.0 hours correctly models exponential decay, but accumulated UAM IOB outlasts delayed GLP-1 meal absorption. Direct CR verification is blocked by missing carb records.",
+      "evidence": "loop logs show dynamic ISF scaling from 27.8 to 124 mg/dL/U; therapy_response_windows show strong 120m correction drops (-168 to -178 mg/dL).",
+      "dependencies": [
+        "basal_targets"
+      ],
+      "data_gaps": "Lack of logged carbohydrate entries prevents isolate verification of CR segments."
+    },
+    {
+      "key": "automation_smb_uam",
+      "status": "completed",
+      "confidence": "high",
+      "findings": "Because no carbs are logged, UAM and SMB always-enabled serve as the sole automated meal response. During delayed GLP-1 meal absorption, UAM delivers continuous microboluses and high temp basals (up to 4.0 U/h) late into the wave, accumulating up to 5.9 U IOB that drives postprandial crashes.",
+      "evidence": "representative_loop_statuses show UAM High Boost enacted with IOB up to 5.93 U at 21:09 and 4.73 U at 15:54.",
+      "dependencies": [
+        "safety_overview",
+        "basal_targets",
+        "profile_cr_isf_dia"
+      ],
+      "data_gaps": "None."
+    },
+    {
+      "key": "automation_sensitivity_limits",
+      "status": "completed",
+      "confidence": "high",
+      "findings": "Safety limits are set dangerously high: Max IOB is 25 U (>125% of Total Daily Dose ~19.7 U), and Max Basal is 12 U/h (15x-24x baseline basal). Dynamic ISF is active at 70% factor. Autosens is disabled. High safety limits rely entirely on secondary oref1 internal maxSafeBasal caps.",
+      "evidence": "aaps_profile.smb_settings.raw_settings: max_iob_units = 25.0, max_basal_u_per_hour = 12.0; treatment_summary total insulin = 275.95 U over 14 days (~19.7 U/day).",
+      "dependencies": [
+        "safety_overview",
+        "basal_targets",
+        "profile_cr_isf_dia",
+        "automation_smb_uam"
+      ],
+      "data_gaps": "None."
+    },
+    {
+      "key": "meal_bolus_strategy",
+      "status": "completed",
+      "confidence": "medium",
+      "findings": "Total reliance on unannounced meals creates severe afternoon peaks (average 162.8 mg/dL at 16:00, maximums >280 mg/dL) followed by early-evening lows (15.3% TBR at 19:00). GLP-1 gastric slowing delays peak carb impact, causing loop UAM logic to over-deliver insulin late in the absorption window.",
+      "evidence": "hourly_glucose_local 14:00-19:00 progression: 153.0 -> 162.8 -> 148.9 -> 124.2 -> 105.4 mg/dL.",
+      "dependencies": [
+        "basal_targets",
+        "profile_cr_isf_dia",
+        "automation_smb_uam",
+        "automation_sensitivity_limits"
+      ],
+      "data_gaps": "Lack of logged bolus timing relative to actual meal intake."
+    },
+    {
+      "key": "meal_ecarbs_absorption",
+      "status": "completed",
+      "confidence": "medium",
+      "findings": "No extended carbs (e-carbs) are logged. Post-meal glucose display shows 3-5 hour extended absorption profiles typical of GLP-1 co-therapy. Without explicit carb logging or extended absorption entries, AAPS default carb absorption dynamic ISF over-titrates insulin.",
+      "evidence": "treatment_summary extended_carb_entries = 0; hourly_glucose_local postprandial elevation spans 12:00 to 17:00.",
+      "dependencies": [
+        "meal_bolus_strategy",
+        "automation_smb_uam"
+      ],
+      "data_gaps": "No recorded e-carbs or carb absorption durations in telemetry."
+    },
+    {
+      "key": "synthesis_plan",
+      "status": "completed",
+      "confidence": "high",
+      "findings": "The primary clinical driver of hypoglycemia is an aggressive overnight target (90 mg/dL) combined with unannounced meal insulin stacking under GLP-1 therapy, exacerbated by excessively wide safety limits (Max IOB 25 U, Max Basal 12 U/h). Baseline basal rates are well-tuned during fasting. Recommended sequence: 1) Raise overnight target to 100 mg/dL; 2) Tighten AAPS Max IOB and Max Basal safety limits; 3) Transition to explicit meal carb logging with extended absorption modeling.",
+      "evidence": "Synthesized from Stage 1-8 evidence.",
+      "dependencies": [
+        "data_quality",
+        "safety_overview",
+        "basal_targets",
+        "profile_cr_isf_dia",
+        "automation_smb_uam",
+        "automation_sensitivity_limits",
+        "meal_bolus_strategy",
+        "meal_ecarbs_absorption"
+      ],
+      "data_gaps": "None."
+    }
+  ],
+  "strengths": [
+    "Overall Time in Range (70-180 mg/dL) is strong at 86.0% with a mean glucose of 121.6 mg/dL.",
+    "Fasting and early morning glucose stability (05:00-09:00) is exceptional, achieving >95% Time in Range with minimal hypoglycemia.",
+    "CGM data quality and coverage are excellent (98.7% coverage over 14 days)."
+  ],
+  "issues": [
+    "Elevated overnight hypoglycemia risk, with Time Below Range reaching 18.5% at 01:00 and 11.4% at 00:00.",
+    "Excessive postprandial glucose volatility in the afternoon (TAR 32.1% at 16:00) followed by sharp early-evening drops (TBR 15.3% at 19:00).",
+    "Complete reliance on unannounced meal (UAM) logic due to zero logged carbohydrates, causing UAM insulin stacking under GLP-1 gastric slowing.",
+    "Disproportionately wide AAPS software safety limits (Max IOB 25 U vs ~19.7 U TDD; Max Basal 12 U/h vs 0.8 U/h max scheduled basal)."
+  ],
+  "recommendations": [
+    {
+      "area": "target",
+      "title": "Raise Overnight Target Setting",
+      "priority": "safety",
+      "description": "Increase target setting from 90 mg/dL to 100 mg/dL between 23:00 and 08:00 to create a safety buffer against nocturnal hypoglycemia.",
+      "suggested_change": {
+        "parameter_key": "profile.target.23_00",
+        "current_value": "90 mg/dL",
+        "suggested_value": "100 mg/dL"
+      }
+    },
+    {
+      "area": "aaps",
+      "title": "Tighten Max IOB and Max Basal Safety Ceilings",
+      "priority": "high",
+      "description": "Lower Max IOB from 25 U to 7.0 U (~35% of TDD) and Max Basal from 12 U/h to 3.0 U/h to prevent runaway automated dosing during UAM or sensor noise.",
+      "suggested_change": {
+        "parameter_key": "aaps.core.safety_limits",
+        "current_value": "max_basal_u_per_hour=12 U/h; max_iob_units=25 U",
+        "suggested_value": "max_basal_u_per_hour=3.0 U/h; max_iob_units=7.0 U"
+      }
+    }
+  ],
+  "profile_recommendation": {
+    "focus": "target",
+    "decision": "change",
+    "recommendation": "Raise the overnight target from 90 mg/dL to 100 mg/dL between 23:00 and 08:00 to reduce nocturnal hypoglycemia.",
+    "rationale": "Time Below Range (<70 mg/dL) reaches 10.1% to 18.5% overnight between 23:00 and 03:00. A target of 90 mg/dL provides insufficient safety margin for nocturnal sensor noise and lingering evening IOB.",
+    "confidence": "high",
+    "next_check": "Monitor overnight glucose for 5-7 days after adjusting target; verify that TBR between 23:00 and 05:00 drops below 4.0%."
+  },
+  "parameter_decisions": [
+    {
+      "parameter_key": "profile.basal.00_00",
+      "parameter": "Profile / basal 00:00 (U/h)",
+      "current_value": "0.6 U/h",
+      "suggested_value": "0.6 U/h",
+      "decision": "keep",
+      "rationale": "Overnight lows are primarily driven by low target (90 mg/dL) and late evening meal IOB rather than excess baseline basal; retain rate while adjusting target."
+    },
+    {
+      "parameter_key": "profile.basal.05_00",
+      "parameter": "Profile / basal 05:00 (U/h)",
+      "current_value": "0.7 U/h",
+      "suggested_value": "0.7 U/h",
+      "decision": "keep",
+      "rationale": "Fasting stability between 05:00 and 09:00 is excellent (TIR >95%), confirming scheduled basal accuracy."
+    },
+    {
+      "parameter_key": "profile.basal.06_00",
+      "parameter": "Profile / basal 06:00 (U/h)",
+      "current_value": "0.8 U/h",
+      "suggested_value": "0.8 U/h",
+      "decision": "keep",
+      "rationale": "Fasting glucose remains flat and in-range during this window; no basal defect observed."
+    },
+    {
+      "parameter_key": "profile.basal.10_00",
+      "parameter": "Profile / basal 10:00 (U/h)",
+      "current_value": "0.7 U/h",
+      "suggested_value": "0.7 U/h",
+      "decision": "keep",
+      "rationale": "Morning elevations are related to unannounced meals rather than baseline basal insufficiency."
+    },
+    {
+      "parameter_key": "profile.basal.16_00",
+      "parameter": "Profile / basal 16:00 (U/h)",
+      "current_value": "0.5 U/h",
+      "suggested_value": "0.5 U/h",
+      "decision": "keep",
+      "rationale": "Afternoon spikes are meal-driven; baseline basal rate is appropriate."
+    },
+    {
+      "parameter_key": "profile.basal.18_00",
+      "parameter": "Profile / basal 18:00 (U/h)",
+      "current_value": "0.6 U/h",
+      "suggested_value": "0.6 U/h",
+      "decision": "keep",
+      "rationale": "Evening crashes (19:00 TBR 15.3%) result from stacked UAM meal boluses earlier in the afternoon rather than basal over-delivery."
+    },
+    {
+      "parameter_key": "profile.basal.19_00",
+      "parameter": "Profile / basal 19:00 (U/h)",
+      "current_value": "0.7 U/h",
+      "suggested_value": "0.7 U/h",
+      "decision": "keep",
+      "rationale": "Retain baseline rate while resolving meal bolusing and safety ceiling issues."
+    },
+    {
+      "parameter_key": "profile.cr.00_00",
+      "parameter": "Profile / CR 00:00 (g/U)",
+      "current_value": "13 g/U",
+      "suggested_value": "13 g/U",
+      "decision": "keep",
+      "rationale": "Zero carb entries logged in telemetry prevents isolated verification of carb ratios; maintain existing setting."
+    },
+    {
+      "parameter_key": "profile.cr.04_00",
+      "parameter": "Profile / CR 04:00 (g/U)",
+      "current_value": "11.1 g/U",
+      "suggested_value": "11.1 g/U",
+      "decision": "keep",
+      "rationale": "Carb ratio evaluation blocked by lack of logged carbohydrates."
+    },
+    {
+      "parameter_key": "profile.cr.08_00",
+      "parameter": "Profile / CR 08:00 (g/U)",
+      "current_value": "13.2 g/U",
+      "suggested_value": "13.2 g/U",
+      "decision": "keep",
+      "rationale": "Carb ratio evaluation blocked by lack of logged carbohydrates."
+    },
+    {
+      "parameter_key": "profile.cr.16_00",
+      "parameter": "Profile / CR 16:00 (g/U)",
+      "current_value": "10.5 g/U",
+      "suggested_value": "10.5 g/U",
+      "decision": "keep",
+      "rationale": "Carb ratio evaluation blocked by lack of logged carbohydrates."
+    },
+    {
+      "parameter_key": "profile.cr.20_00",
+      "parameter": "Profile / CR 20:00 (g/U)",
+      "current_value": "12.6 g/U",
+      "suggested_value": "12.6 g/U",
+      "decision": "keep",
+      "rationale": "Carb ratio evaluation blocked by lack of logged carbohydrates."
+    },
+    {
+      "parameter_key": "profile.isf.00_00",
+      "parameter": "Profile / ISF 00:00 (mg/dL/U)",
+      "current_value": "56 mg/dL/U",
+      "suggested_value": "56 mg/dL/U",
+      "decision": "keep",
+      "rationale": "Correction response windows show effective lowering during manual boluses; dynamic ISF handles live adjustments."
+    },
+    {
+      "parameter_key": "profile.target.00_00",
+      "parameter": "Profile / target 00:00 (mg/dL)",
+      "current_value": "90 mg/dL",
+      "suggested_value": "100 mg/dL",
+      "decision": "change",
+      "rationale": "High overnight hypoglycemia (up to 18.5% TBR) requires a higher target buffer between 23:00 and 08:00."
+    },
+    {
+      "parameter_key": "profile.target.08_00",
+      "parameter": "Profile / target 08:00 (mg/dL)",
+      "current_value": "100 mg/dL",
+      "suggested_value": "100 mg/dL",
+      "decision": "keep",
+      "rationale": "Daytime target of 100 mg/dL provides appropriate balance during active hours."
+    },
+    {
+      "parameter_key": "profile.target.23_00",
+      "parameter": "Profile / target 23:00 (mg/dL)",
+      "current_value": "90 mg/dL",
+      "suggested_value": "100 mg/dL",
+      "decision": "change",
+      "rationale": "Align late-night target start with 00:00 target change to protect against early nocturnal drops."
+    },
+    {
+      "parameter_key": "profile.dia",
+      "parameter": "Profile / DIA (h)",
+      "current_value": "10 h",
+      "suggested_value": "10 h",
+      "decision": "keep",
+      "rationale": "10-hour DIA accurately reflects modern exponential insulin decay curves in oref1."
+    },
+    {
+      "parameter_key": "aaps.core.smb_uam",
+      "parameter": "AAPS / SMB and UAM",
+      "current_value": "smb_enabled=true; uam_enabled=true",
+      "suggested_value": "smb_enabled=true; uam_enabled=true",
+      "decision": "keep",
+      "rationale": "UAM is currently essential as no carbs are logged; keep enabled while introducing meal logging."
+    },
+    {
+      "parameter_key": "aaps.core.smb_activation",
+      "parameter": "AAPS / SMB activation conditions",
+      "current_value": "smb_always_enabled=true; smb_with_cob_enabled=false; smb_after_carbs_enabled=false; smb_with_temp_target_enabled=true; smb_with_high_temp_target_enabled=false",
+      "suggested_value": "smb_always_enabled=true; smb_with_cob_enabled=false; smb_after_carbs_enabled=false; smb_with_temp_target_enabled=true; smb_with_high_temp_target_enabled=false",
+      "decision": "keep",
+      "rationale": "Settings match current unannounced meal reliance."
+    },
+    {
+      "parameter_key": "aaps.core.smb_delivery",
+      "parameter": "AAPS / SMB strength and frequency",
+      "current_value": "smb_interval_minutes=3 min; max_smb_basal_minutes=15 min; max_uam_smb_basal_minutes=20 min",
+      "suggested_value": "smb_interval_minutes=3 min; max_smb_basal_minutes=15 min; max_uam_smb_basal_minutes=20 min",
+      "decision": "keep",
+      "rationale": "Delivery parameters are standard for oref1; control over-dosing via Max IOB safety ceiling instead."
+    },
+    {
+      "parameter_key": "aaps.core.safety_limits",
+      "parameter": "AAPS / max basal and max IOB limits",
+      "current_value": "max_basal_u_per_hour=12 U/h; max_iob_units=25 U",
+      "suggested_value": "max_basal_u_per_hour=3.0 U/h; max_iob_units=7.0 U",
+      "decision": "change",
+      "rationale": "Max IOB of 25 U is excessive for a ~19.7 U TDD, offering no safety barrier against UAM stacking or sensor errors. Reduce Max IOB to 7.0 U and Max Basal to 3.0 U/h."
+    },
+    {
+      "parameter_key": "aaps.core.sensitivity",
+      "parameter": "AAPS / Autosens and Dynamic ISF",
+      "current_value": "autosens_enabled=false; dynamic_sensitivity_enabled=true; autosens_raises_target=false; autosens_lowers_target=false; dynamic_isf_adjustment_factor_percent=70 %",
+      "suggested_value": "autosens_enabled=false; dynamic_sensitivity_enabled=true; autosens_raises_target=false; autosens_lowers_target=false; dynamic_isf_adjustment_factor_percent=70 %",
+      "decision": "keep",
+      "rationale": "Dynamic ISF performs well during high spikes; retain 70% adjustment factor."
+    },
+    {
+      "parameter_key": "aaps.core.carb_absorption",
+      "parameter": "AAPS / carbohydrate absorption model",
+      "current_value": "min_5m_carbimpact=8 mg/dL/5 min; meal_max_absorption_hours=7 h",
+      "suggested_value": "min_5m_carbimpact=8 mg/dL/5 min; meal_max_absorption_hours=7 h",
+      "decision": "keep",
+      "rationale": "Absorption model parameters are standard for oref1 dynamic carb decay."
+    }
+  ],
+  "meal_strategy_summary": {
+    "suggestion": "Transition from total reliance on unannounced meals (UAM) to logging carbohydrates in AAPS prior to meals. Given GLP-1 gastric slowing, combine a modest immediate pre-meal bolus (e.g., 30-50%) with extended carbohydrate (e-carb) entry spanning 3-4 hours to prevent UAM insulin stacking.",
+    "rationale": "GLP-1 therapy delays postprandial glucose rises. Unannounced meal logic detects this rise late, delivering continuous SMBs and high basals at peak absorption that cause severe postprandial drop-offs (15.3% TBR at 19:00).",
+    "confidence": "medium",
+    "next_observation": "Log meal carbohydrates and pre-bolus timing consistently for 7 days to evaluate true Carb Ratio performance.",
+    "exceptions": [
+      {
+        "pattern": "Afternoon Main Meal (12:00-16:00)",
+        "suggestion": "Enter carbohydrates explicitly with an extended absorption duration (e-carbs) over 3 to 4 hours rather than letting UAM react unannounced.",
+        "rationale": "Prevents late UAM insulin accumulation that leads to 18:00-19:00 hypoglycemia (15.3% TBR)."
+      },
+      {
+        "pattern": "Late Evening / Bedtime Snacks (21:00-23:00)",
+        "suggestion": "Avoid unannounced late snacks; log carbs explicitly or use a temporary high target if active carbs remain at bedtime.",
+        "rationale": "Prevents stacked evening IOB from driving overnight lows."
+      }
+    ]
+  },
+  "implementation_steps": [
+    "Step 1: Review and update the profile target from 90 mg/dL to 100 mg/dL between 23:00 and 08:00.",
+    "Step 2: Adjust AAPS Safety Limits: lower Max IOB from 25.0 U to 7.0 U, and lower Max Basal from 12.0 U/h to 3.0 U/h.",
+    "Step 3: Begin explicit carbohydrate logging in AAPS for all major meals, utilizing extended carb (e-carb) entries over 3-4 hours for GLP-1 delayed absorption.",
+    "Step 4: Monitor overnight Time Below Range and postprandial glucose stability for 5-7 days before considering any further profile adjustments."
+  ],
+  "education": [
+    "GLP-1 receptor agonists slow stomach emptying, causing carbohydrate absorption to spread over 3 to 5 hours rather than 1 to 2 hours.",
+    "When meals are unannounced, automated systems like AAPS UAM interpret delayed glucose rises as continuous high demand, potentially over-delivering insulin late in the absorption window.",
+    "AAPS Max IOB acts as a crucial safety ceiling; setting it near or above Total Daily Dose removes protective boundaries against sensor noise or insulin stacking."
+  ],
+  "safety_notes": [
+    "This analysis is decision-support content only and does not constitute medical advice.",
+    "All proposed parameter changes must be independently verified by the user and reviewed with their healthcare team.",
+    "Change parameters one at a time and monitor blood glucose closely following any adjustment.",
+    "Always maintain accessible rapid-acting carbohydrates for treatment of hypoglycemia."
+  ]
+}

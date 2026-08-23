@@ -1,0 +1,189 @@
+{
+  "summary": "The glucose data shows variability with a mix of high and low glucose events. The current AAPS configuration is complex, with SMB/UAM enabled and high safety limits.",
+  "analysis_steps": [
+    {
+      "key": "data_quality",
+      "status": "completed",
+      "confidence": "high",
+      "findings": "CGM coverage is 98.7% with 10 gaps, the largest being 65 minutes.",
+      "evidence": "telemetry.data_quality",
+      "dependencies": [],
+      "data_gaps": []
+    },
+    {
+      "key": "safety_overview",
+      "status": "completed",
+      "confidence": "high",
+      "findings": "TIR is 86.0%, TAR is 8.9%, and TBR is 5.1%. Average glucose is 121.6 mg/dL.",
+      "evidence": "glucose_summary",
+      "dependencies": [
+        "data_quality"
+      ],
+      "data_gaps": []
+    },
+    {
+      "key": "basal_targets",
+      "status": "completed",
+      "confidence": "medium",
+      "findings": "Basal rates and targets are configured with variability across the day.",
+      "evidence": "hourly_glucose_local, basal_segments, target_segments",
+      "dependencies": [
+        "data_quality",
+        "safety_overview"
+      ],
+      "data_gaps": [
+        "meal carb entries"
+      ]
+    },
+    {
+      "key": "profile_cr_isf_dia",
+      "status": "completed",
+      "confidence": "medium",
+      "findings": "CR, ISF, and DIA settings are in place with some variability.",
+      "evidence": "carb_ratio_segments, isf_segments, dia_hours",
+      "dependencies": [
+        "basal_targets"
+      ],
+      "data_gaps": [
+        "meal carb entries"
+      ]
+    },
+    {
+      "key": "automation_smb_uam",
+      "status": "completed",
+      "confidence": "high",
+      "findings": "SMB/UAM are enabled with high safety limits and frequent SMB delivery.",
+      "evidence": "smb_settings",
+      "dependencies": [
+        "safety_overview",
+        "basal_targets",
+        "profile_cr_isf_dia"
+      ],
+      "data_gaps": []
+    },
+    {
+      "key": "automation_sensitivity_limits",
+      "status": "completed",
+      "confidence": "high",
+      "findings": "Autosens is disabled, but Dynamic ISF is enabled with a 70% adjustment factor.",
+      "evidence": "smb_settings.raw_settings",
+      "dependencies": [
+        "safety_overview",
+        "basal_targets",
+        "profile_cr_isf_dia",
+        "automation_smb_uam"
+      ],
+      "data_gaps": []
+    },
+    {
+      "key": "meal_bolus_strategy",
+      "status": "completed",
+      "confidence": "medium",
+      "findings": "The meal strategy relies on SMB/UAM with occasional manual correction boluses.",
+      "evidence": "representative_treatments, therapy_response_windows",
+      "dependencies": [
+        "basal_targets",
+        "profile_cr_isf_dia",
+        "automation_smb_uam",
+        "automation_sensitivity_limits"
+      ],
+      "data_gaps": [
+        "detailed meal information"
+      ]
+    },
+    {
+      "key": "meal_ecarbs_absorption",
+      "status": "completed",
+      "confidence": "low",
+      "findings": "No explicit e-carb settings or usage are declared.",
+      "evidence": "carb_treatment_entries",
+      "dependencies": [
+        "meal_bolus_strategy"
+      ],
+      "data_gaps": [
+        "e-carb data"
+      ]
+    },
+    {
+      "key": "synthesis_plan",
+      "status": "completed",
+      "confidence": "medium",
+      "findings": "The primary recommendation is to adjust the max IOB limit to a safer value.",
+      "evidence": "treatment_summary, max_iob_units",
+      "dependencies": [
+        "automation_smb_uam",
+        "automation_sensitivity_limits",
+        "meal_bolus_strategy"
+      ],
+      "data_gaps": []
+    }
+  ],
+  "strengths": [
+    "Good CGM coverage",
+    "Active SMB/UAM configuration"
+  ],
+  "issues": [
+    "High max IOB limit",
+    "Glucose variability"
+  ],
+  "recommendations": [
+    {
+      "area": "AAPS safety limits",
+      "title": "Adjust max IOB limit",
+      "priority": "high",
+      "description": "Lower max IOB from 25 U to a safer value like 15 U to reduce excessive insulin risk.",
+      "suggested_change": "{\"max_iob_units\": 15}"
+    }
+  ],
+  "profile_recommendation": {
+    "focus": "basal",
+    "decision": "keep",
+    "recommendation": "Keep basal settings with next check on overnight glucose stability.",
+    "rationale": "Basal settings appear reasonable with current glucose patterns.",
+    "confidence": "medium",
+    "next_check": "Monitor overnight glucose stability."
+  },
+  "parameter_decisions": [
+    {
+      "parameter_key": "profile.basal.00_00",
+      "parameter": "Profile / basal 00:00",
+      "current_value": "0.6 U/h",
+      "suggested_value": "0.6 U/h",
+      "decision": "keep",
+      "rationale": "No strong evidence to change basal rate at 00:00."
+    },
+    {
+      "parameter_key": "aaps.core.safety_limits",
+      "parameter": "AAPS / max basal and max IOB limits",
+      "current_value": "max_basal_u_per_hour=12 U/h; max_iob_units=25 U",
+      "suggested_value": "{\"max_iob_units\": 15}",
+      "decision": "change",
+      "rationale": "High max IOB poses a risk of excessive insulin action."
+    }
+  ],
+  "meal_strategy_summary": {
+    "suggestion": "Rely on SMB/UAM for meal coverage with occasional manual correction boluses.",
+    "rationale": "SMB/UAM are enabled and active, with manual corrections for high glucose events.",
+    "confidence": "medium",
+    "next_observation": "Record detailed meal information to improve confidence.",
+    "exceptions": [
+      {
+        "pattern": "Temp targets influence SMB/UAM behavior.",
+        "suggestion": "Review temp target usage and its impact on SMB/UAM.",
+        "rationale": "Temp targets occasionally used and influence SMB/UAM actions."
+      }
+    ]
+  },
+  "implementation_steps": [
+    "Adjust max IOB limit to 15 U.",
+    "Monitor glucose closely after the change."
+  ],
+  "education": [
+    "Understand the impact of max IOB on glucose control.",
+    "Monitor glucose closely after changing settings."
+  ],
+  "safety_notes": [
+    "Make changes one at a time and monitor glucose closely.",
+    "Verify every proposed change independently."
+  ]
+}

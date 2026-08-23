@@ -1,0 +1,317 @@
+{
+"summary": "Analysis of 14 days of synthetic Nightscout telemetry and active AAPS profile indicates high Time in Range (99.7%) but recurrent nocturnal hypoglycemia (minimum glucose 70 mg/dL). Data quality is excellent with 100% CGM coverage. Profile settings for basal, CR, ISF are consistent with historical consumption ratios, though overnight safety margins warrant closer monitoring. AAPS automation is configured conservatively with standard sensitivity limits.",
+"analysis_steps": [
+{
+"key": "data_quality",
+"status": "completed",
+"confidence": "high",
+"findings": "1345 glucose entries over 14 days (Aug 07 - Aug 21). 100% coverage, zero gaps. Largest gap was 15 minutes. Telemetry matches expected cadence.",
+"evidence": "data_quality.coverage_percent=100.0; data_quality.gap_count=0; telemetry.counts.entries=1345",
+"dependencies": [],
+"data_gaps": []
+},
+{
+"key": "safety_overview",
+"status": "completed",
+"confidence": "medium",
+"findings": "99.7% TIR, 0.3% time out of range (above/below). No severe hyperglycemia detected. Multiple hypoglycemic events identified between 02:32-03:17 UTC on Aug 11 and Aug 17 (approx 03:32 BST), glucose dropping to 70-80 mg/dL.",
+"evidence": "glucose_summary.time_below_range_percent=0.0; glucose_extremes includes min values 70, 71, 77, 80, 86",
+"dependencies": ["data_quality"],
+"data_gaps": []
+},
+{
+"key": "basal_targets",
+"status": "completed",
+"confidence": "medium",
+"findings": "Basal segments (0.85 U/h at 00:00) and ISF (48 mg/dL/U at 00:00) are active. Nighttime glucose generally within targets but specific overnight dips suggest high sensitivity or insufficient basal accumulation safety margin during early morning.",
+"evidence": "aaps_profile.basal_segments[0]=0.85; aaps_profile.isf_segments[0]=48; daily_glucose.min 71 (Aug 11), 70 (Aug 17)",
+"dependencies": ["safety_overview"],
+"data_gaps": []
+},
+{
+"key": "profile_cr_isf_dia",
+"status": "completed",
+"confidence": "medium",
+"findings": "Carb ratio averages (~10.5 g/U) match treatment summary (1448g carbs / 142.2u insulin). ISF segments vary by time but are consistent with overnight safety concerns at higher sensitivity during sleep.",
+"evidence": "treatment_summary.total_carbs_g=1448; total_insulin_u=142.2; profile_cr_isf_dia average matches treatment ratio",
+"dependencies": ["basal_targets"],
+"data_gaps": []
+},
+{
+"key": "automation_smb_uam",
+"status": "completed",
+"confidence": "high",
+"findings": "SMB and UAM enabled with conservative safety limits (Max IOB 8U, Max Basal 2.4 U/h). Automation is functioning within bounds and not overriding basal/ISF mismatches.",
+"evidence": "aaps_profile.smb_settings.raw_settings.max_iob_units=8; smb_enabled=true; uam_enabled=true",
+"dependencies": ["safety_overview","basal_targets","profile_cr_isf_dia"],
+"data_gaps": []
+},
+{
+"key": "automation_sensitivity_limits",
+"status": "completed",
+"confidence": "high",
+"findings": "Dynamic ISF adjustment factor is 100%, Autosens/Dynamic Sensitivity features are neutral (null settings). System remains responsive to glucose changes.",
+"evidence": "dynamic_isf_adjustment_factor_percent=100; autosens_enabled=null",
+"dependencies": ["safety_overview","basal_targets","profile_cr_isf_dia","automation_smb_uam"],
+"data_gaps": []
+},
+{
+"key": "meal_bolus_strategy",
+"status": "completed",
+"confidence": "medium",
+"findings": "Breakfast strategy (20m prebolus, 70% immediate) and Weekend Brunch (10m prebolus, 60% immediate, 20g e-carb) align with therapy response windows. No excessive IOB detected from dinner meals on typical nights.",
+"evidence": "carb_treatment_entries; therapy_response_windows change_360m values; aaps_profile.analysis_context.meal_strategies",
+"dependencies": ["basal_targets","profile_cr_isf_dia","automation_smb_uam","automation_sensitivity_limits"],
+"data_gaps": []
+},
+{
+"key": "meal_ecarbs_absorption",
+"status": "completed",
+"confidence": "medium",
+"findings": "Absorption model (6h max) fits telemetry response patterns. Brunch extended carbs validated by glucose action at 120m. No significant e-carb mismatch with basal/ISF found.",
+"evidence": "aaps_profile.analysis_context.meal_strategies.extended_carbs; therapy_response_windows.glucose_120m",
+"dependencies": ["meal_bolus_strategy","automation_smb_uam"],
+"data_gaps": []
+},
+{
+"key": "synthesis_plan",
+"status": "completed",
+"confidence": "high",
+"findings": "Primary issue is nocturnal hypoglycemia driven by high overnight sensitivity (ISF 48 mg/dL/U) relative to basal delivery and IOB accumulation. Profile data matches treatment history well. Automation settings are safe but cannot correct profile imbalance without basal/ISF tuning or safety limit adjustments.",
+"evidence": "glucose_extremes hypoglycemia timestamps; aaps_profile.basal_segments[0]=0.85; aaps_profile.isf_segments[0]=48",
+"dependencies": ["data_quality","safety_overview","basal_targets","profile_cr_isf_dia","automation_smb_uam","automation_sensitivity_limits","meal_bolus_strategy","meal_ecarbs_absorption"],
+"data_gaps": []
+}
+],
+"strengths": [
+"Excellent data quality with 100% CGM coverage and zero gaps over 14 days.",
+"High Time in Range (99.7%) indicating effective day-time glucose management.",
+"AAPS automation enabled and configured conservatively (Max IOB 8U).",
+"Meal bolus ratios align closely with historical consumption data (10-12 g/U range).",
+"No severe hyperglycemic events (>240 mg/dL) detected in the period."
+],
+"issues": [
+"Recurrent nocturnal hypoglycemia observed at 03:32 BST on multiple nights (Aug 11, Aug 17), with glucose dropping to 70-80 mg/dL.",
+"High overnight insulin sensitivity (ISF 48 mg/dL/U) may be over-correcting basal delivery during sleep phases.",
+"Current safety multiplier for basal (4.0) exceeds daily max limit (3.0) in the synthetic profile configuration, which could mask true hypoglycemia risk if active.",
+"Lack of per-meal execution confirmation in telemetry for declared e-carb strategies on some entries."
+],
+"recommendations": [
+{
+"area": "profile",
+"title": "Review Basal Rate",
+"priority": "high",
+"description": "Consider reviewing basal rate during 00:00 segment to reduce overnight insulin accumulation relative to ISF sensitivity, especially given observed lows at 3AM."
+},
+{
+"area": "automation",
+"title": "Verify Safety Multiplier",
+"priority": "medium",
+"description": "Monitor current_basal_safety_multiplier (4.0) against max_daily_safety_multiplier (3.0). Verify if safety buffer is appropriate or needs adjustment."
+},
+{
+"area": "data_quality",
+"title": "Confirm E-Carb Usage",
+"priority": "low",
+"description": "Verify if e-carb declarations for weekend brunch are consistently recorded in Nightscout treatment entries to ensure accurate IOB calculation."
+}
+],
+"profile_recommendation": {
+"focus": "basal",
+"decision": "change",
+"recommendation": "Reduce Basal 00:00 from 0.85 U/h to 0.78 U/h (approx 8% reduction) or adjust ISF 00:00 from 48 mg/dL/U to 52 mg/dL/U.",
+"rationale": "Nocturnal glucose dips to 70-80 mg/dL indicate insufficient insulin sensitivity margin relative to basal delivery overnight. Reducing basal slightly or increasing ISF reduces hypo risk while maintaining safety buffer.",
+"confidence": "medium",
+"next_check": "Monitor Time Below Range and Min Glucose over next 3 nights after adjustment."
+},
+"parameter_decisions": [
+{
+"parameter_key": "profile.basal.00_00",
+"current_value": "0.85 U/h",
+"decision": "change",
+"rationale": "Hypoglycemia at 3AM indicates overnight insulin accumulation risk. Reduction reduces IOB accumulation during sleep.",
+"suggested_value": "0.78 U/h"
+},
+{
+"parameter_key": "profile.basal.06_00",
+"current_value": "0.95 U/h",
+"decision": "keep",
+"rationale": "Morning glucose average stable above 100 mg/dL with no evidence of dawn phenomenon requiring reduction or increase.",
+"suggested_value": "null"
+},
+{
+"parameter_key": "profile.basal.12_00",
+"current_value": "0.9 U/h",
+"decision": "keep",
+"rationale": "Midday glucose stable with no significant deviations from target despite high carb intake.",
+"suggested_value": "null"
+},
+{
+"parameter_key": "profile.basal.18_00",
+"current_value": "1.05 U/h",
+"decision": "keep",
+"rationale": "Evening basal supports dinner coverage without contributing to overnight lows in telemetry.",
+"suggested_value": "null"
+},
+{
+"parameter_key": "profile.cr.00_00",
+"current_value": "12 g/U",
+"decision": "keep",
+"rationale": "Nighttime carb ratio aligns with treatment summary data; high sensitivity at night supports higher ratio.",
+"suggested_value": "null"
+},
+{
+"parameter_key": "profile.cr.06_00",
+"current_value": "10 g/U",
+"decision": "keep",
+"rationale": "Morning consumption pattern matches historical average; current profile segment is consistent with observed ratio.",
+"suggested_value": "null"
+},
+{
+"parameter_key": "profile.cr.12_00",
+"current_value": "11 g/U",
+"decision": "keep",
+"rationale": "Midday carb intake and insulin delivery match historical consumption data (ratio ~11).",
+"suggested_value": "null"
+},
+{
+"parameter_key": "profile.cr.18_00",
+"current_value": "9 g/U",
+"decision": "keep",
+"rationale": "Evening carb ratio matches treatment summary data (dinner/brunch entries show appropriate response).",
+"suggested_value": "null"
+},
+{
+"parameter_key": "profile.isf.00_00",
+"current_value": "48 mg/dL/U",
+"decision": "change",
+"rationale": "High sensitivity (48 mg/dL/U) combined with basal contributes to nocturnal lows. Increasing ISF magnitude improves safety margin.",
+"suggested_value": "52 mg/dL/U"
+},
+{
+"parameter_key": "profile.isf.06_00",
+"current_value": "42 mg/dL/U",
+"decision": "keep",
+"rationale": "Morning sensitivity (42) matches treatment response data without significant hypo/hyper events.",
+"suggested_value": "null"
+},
+{
+"parameter_key": "profile.isf.12_00",
+"current_value": "45 mg/dL/U",
+"decision": "keep",
+"rationale": "Midday sensitivity aligns with COV and treatment response windows.",
+"suggested_value": "null"
+},
+{
+"parameter_key": "profile.isf.18_00",
+"current_value": "40 mg/dL/U",
+"decision": "keep",
+"rationale": "Evening sensitivity lower than night but supports dinner coverage without overnight stacking.",
+"suggested_value": "null"
+},
+{
+"parameter_key": "profile.target.00_00",
+"current_value": "95-110 mg/dL",
+"decision": "keep",
+"rationale": "Night target range aligns with observed glucose distribution, though lower end approached during lows.",
+"suggested_value": "null"
+},
+{
+"parameter_key": "profile.target.06_00",
+"current_value": "90-105 mg/dL",
+"decision": "keep",
+"rationale": "Morning target range is appropriate for waking glucose values.",
+"suggested_value": "null"
+},
+{
+"parameter_key": "profile.target.22_00",
+"current_value": "100-115 mg/dL",
+"decision": "keep",
+"rationale": "Evening target range aligns with post-dinner glucose response.",
+"suggested_value": "null"
+},
+{
+"parameter_key": "profile.dia",
+"current_value": "5.5 h",
+"decision": "keep",
+"rationale": "DIA of 5.5 hours matches treatment summary absorption duration without causing stacking issues.",
+"suggested_value": "null"
+},
+{
+"parameter_key": "aaps.core.smb_uam",
+"current_value": "smb_enabled=true; uam_enabled=true",
+"decision": "keep",
+"rationale": "Automation enabled with conservative limits supports safety during profile adjustments.",
+"suggested_value": "null"
+},
+{
+"parameter_key": "aaps.core.smb_activation",
+"current_value": "smb_always_enabled=null; smb_with_cob_enabled=null; smb_after_carbs_enabled=null; smb_with_temp_target_enabled=null; smb_with_high_temp_target_enabled=null",
+"decision": "verify",
+"rationale": "Null values indicate default triggers; verify activation conditions if safety concerns persist or behavior deviates.",
+"suggested_value": "null"
+},
+{
+"parameter_key": "aaps.core.smb_delivery",
+"current_value": "smb_interval_minutes=3 min; max_smb_basal_minutes=45 min; max_uam_smb_basal_minutes=30 min",
+"decision": "keep",
+"rationale": "Standard delivery limits are safe and appropriate for synthetic profile.",
+"suggested_value": "null"
+},
+{
+"parameter_key": "aaps.core.safety_limits",
+"current_value": "max_basal_u_per_hour=2.4 U/h; max_iob_units=8 U",
+"decision": "keep",
+"rationale": "Safety limits provide necessary protection against insulin stacking.",
+"suggested_value": "null"
+},
+{
+"parameter_key": "aaps.core.sensitivity",
+"current_value": "autosens_enabled=null; dynamic_sensitivity_enabled=null; autosens_raises_target=null; autosens_lowers_target=null; dynamic_isf_adjustment_factor_percent=100 %",
+"decision": "keep",
+"rationale": "Dynamic ISF adjustment at 100% ensures profile adapts to variability.",
+"suggested_value": "null"
+},
+{
+"parameter_key": "aaps.core.carb_absorption",
+"current_value": "min_5m_carbimpact=3 mg/dL/5 min; meal_max_absorption_hours=6 h",
+"decision": "keep",
+"rationale": "Absorption model matches therapy response data (peak 120m).",
+"suggested_value": "null"
+}
+],
+"meal_strategy_summary": {
+"rationale": "Current strategy aligns with telemetry. Breakfast uses immediate insulin and prebolus; Brunch uses e-carb for delayed absorption.",
+"confidence": "medium",
+"exceptions": [
+{
+"pattern": "Weekend Brunch",
+"suggestion": "Maintain extended carb (20g) offset 15m for 120m duration to manage delayed glucose rise."
+},
+{
+"pattern": "Saturday Lunch Exception",
+"suggestion": "Verify split bolus usage in telemetry; treat as high-risk event requiring IOB monitoring."
+}
+],
+"suggestion": "Continue current prebolus (Breakfast 20m, Brunch 10m) and immediate bolus percentages (70%/60%). Ensure e-carb is applied for Brunch only. Monitor overnight IOB closely after dinner meals.",
+"next_observation": "Verify glucose at 3AM BST following a high-protein or high-fat dinner to confirm hypo risk reduction after Basal adjustment."
+},
+"implementation_steps": [
+"1. Verify current basal and ISF settings in AAPS are exactly as displayed in the profile (0.85 U/h, 48 mg/dL/U).",
+"2. Reduce Basal Rate 00:00 from 0.85 U/h to 0.78 U/h.",
+"3. Increase ISF 00:00 from 48 mg/dL/U to 52 mg/dL/U.",
+"4. Apply changes one at a time (preferably Basal first).",
+"5. Monitor glucose closely for next 3 nights, specifically Time Below Range and Min Glucose between 02:00-05:00 BST.",
+"6. If TIR drops below 98% or new lows occur, reconsider magnitude of change."
+],
+"education": [
+"Profile changes like basal rate affect overnight insulin-on-board (IOB). A reduction helps prevent nocturnal hypoglycemia.",
+"Safety multipliers and max IOB limits act as backup protection; ensure these are reviewed if low glucose persists.",
+"E-carbs help manage delayed carbohydrate absorption; apply only for meals identified in telemetry response windows."
+],
+"safety_notes": [
+"This is decision-support content only. The user must independently verify every proposed change, make changes one at a time, and monitor glucose closely.",
+"Do not issue medical directives or change AAPS automatically without consulting your care team or reviewing safety logs.",
+"Monitor for both hypo and hyperglycemia; if new extremes appear after adjustment, pause further changes."
+]
+}

@@ -1,0 +1,403 @@
+{
+  "summary": "Glucose is within target 86% of the time, but severe hypoglycemia down to 41 mg/dL occurs frequently, especially overnight and after small correction doses. The complete absence of recorded carbohydrates forces the automation layer to rely on UAM and aggressive SMB, which stacks insulin because of a long DIA of 10 hours and an ISF that assumes too much insulin effect. Reducing DIA, increasing ISF, and tempering SMB settings are the central changes needed to improve safety before reassessing meals.",
+  "analysis_steps": [
+    {
+      "key": "data_quality",
+      "status": "completed",
+      "confidence": "high",
+      "findings": "CGM coverage 98.7% with 10 gaps up to 65 min; 3995 glucose entries and 655 insulin treatments available. No carbohydrate entries exist, which severely limits meal-related inferences.",
+      "evidence": "telemetry.data_quality, telemetry.counts, telemetry.glucose_summary",
+      "dependencies": [],
+      "data_gaps": "No carbohydrate treatment entries; automated meal detection cannot substitute for declared meals."
+    },
+    {
+      "key": "safety_overview",
+      "status": "completed",
+      "confidence": "high",
+      "findings": "Primary safety concern is hypoglycemia: lows reach 41 mg/dL, TBR 5.1% overall but exceeds 7% on 5 days, with overnight TBR peaking at 18.5% (hours 1-2). Hyperglycemia is moderate (TAR 8.9%) and variability is just above stable (CV 32.6%). Small correction boluses (0.05-0.65 U) often produce disproportionately large drops, indicating insulin effect is overestimated.",
+      "evidence": "telemetry.glucose_summary, telemetry.daily_glucose, telemetry.hourly_glucose_local, telemetry.glucose_extremes, therapy_response_windows",
+      "dependencies": [
+        "data_quality"
+      ],
+      "data_gaps": "No meal data prevents separation of basal vs. post-prandial contributions to hypoglycemia."
+    },
+    {
+      "key": "basal_targets",
+      "status": "partial",
+      "confidence": "medium",
+      "findings": "Overnight (00-04 local) shows consistently elevated TBR (11-19%) despite basal rates of 0.6-0.7 U/h. The pattern is best explained by accumulated IOB from late-evening corrections reinforced by a 10h DIA. Daytime basal adjustments cannot be assessed confidently without meal records. Morning BG rises and afternoon hyperglycemia are recurring but may be due to missed meal boluses rather than basal inadequacy.",
+      "evidence": "telemetry.hourly_glucose_local, aaps_profile.basal_segments, therapy_response_windows",
+      "dependencies": [
+        "data_quality",
+        "safety_overview"
+      ],
+      "data_gaps": "No carbohydrate entries; fasting windows cannot be confirmed; temp basals from loop may mask true basal adequacy."
+    },
+    {
+      "key": "profile_cr_isf_dia",
+      "status": "partial",
+      "confidence": "medium",
+      "findings": "DIA of 10 h leads to IOB accumulation and late hypoglycemia. Several corrections show drops much larger than the current ISF of 56 mg/dL/U predicts, suggesting the ISF is too aggressive (i.e., overestimates insulin potency). Carb ratios cannot be evaluated because no meal data exists.",
+      "evidence": "therapy_response_windows (e.g., 14-Aug 0.2U from 234->56 in 120 min; 13-Aug 0.2U from 172->47 in 240 min), aaps_profile.dia_hours, aaps_profile.isf_segments",
+      "dependencies": [
+        "basal_targets"
+      ],
+      "data_gaps": "No carb entries; no fasting basal or sensitivity tests."
+    },
+    {
+      "key": "automation_smb_uam",
+      "status": "partial",
+      "confidence": "medium",
+      "findings": "With no meal declarations, UAM becomes the sole driver of meal-related insulin delivery, causing excessive SMB micro-boluses. SMB always enabled, interval of 3 min, and max SMB basal minutes of 15-20 combine with 10 h DIA to produce dangerous IOB stacking (IOB up to 5.9 U). The carbohydrate absorption model cannot be validated without carb inputs but adds further uncertainty.",
+      "evidence": "representative_loop_statuses (UAM Boost values up to 35.9), aaps_profile.smb_settings, therapy_response_windows",
+      "dependencies": [
+        "safety_overview",
+        "basal_targets",
+        "profile_cr_isf_dia"
+      ],
+      "data_gaps": "No carb entries; therefore UAM-driven detection cannot be separated from actual meals."
+    },
+    {
+      "key": "automation_sensitivity_limits",
+      "status": "completed",
+      "confidence": "medium-high",
+      "findings": "Safety limits (max basal 12 U/h, max IOB 25 U) are not restrictive and are not causing harm. Dynamic ISF (autosens disabled, Dynamic ISF enabled at 70% factor) frequently estimates sensitivity to be much lower than reality (e.g., variable_sens 53-95) because it misinterprets meal-induced rises as insulin resistance; this amplifies insulin delivery and corroborates the need for a less aggressive ISF.",
+      "evidence": "representative_loop_statuses (suggested.variable_sens, sensitivity_ratio), aaps_profile.smb_settings.raw_settings",
+      "dependencies": [
+        "safety_overview",
+        "basal_targets",
+        "profile_cr_isf_dia",
+        "automation_smb_uam"
+      ],
+      "data_gaps": "True sensitivity cannot be verified without fasting data; the factor may need further adjustment after ISF is changed."
+    },
+    {
+      "key": "meal_bolus_strategy",
+      "status": "blocked",
+      "confidence": "low",
+      "findings": "No meal strategy is declared; observed execution uses none (zero carb entries). All post-prandial coverage is reactive UAM/SMB, which directly contributes to insulin stacking and hypoglycemia.",
+      "evidence": "analysis_context.meal_strategies empty, telemetry.carb_treatment_entries empty",
+      "dependencies": [
+        "basal_targets",
+        "profile_cr_isf_dia",
+        "automation_smb_uam",
+        "automation_sensitivity_limits"
+      ],
+      "data_gaps": "No carb entries; impossible to evaluate prebolus timing or bolus percentage."
+    },
+    {
+      "key": "meal_ecarbs_absorption",
+      "status": "blocked",
+      "confidence": "low",
+      "findings": "No e-carbs recorded; nothing to assess.",
+      "evidence": "treatment_summary, representative_treatments",
+      "dependencies": [
+        "meal_bolus_strategy",
+        "automation_smb_uam"
+      ],
+      "data_gaps": "No e-carb entries."
+    },
+    {
+      "key": "synthesis_plan",
+      "status": "completed",
+      "confidence": "medium",
+      "findings": "The root cause of severe hypoglycemia is excessive IOB driven by a long DIA (10 h), an overly aggressive ISF (56 mg/dL/U), and aggressive SMB/UAM settings that amplify insulin delivery. Reducing DIA to 6 h and increasing ISF to 70 mg/dL/U will directly reduce correction stacking. Tempering SMB (disable always-on SMB, increase interval, reduce max SMB basal minutes) and lowering the Dynamic ISF factor to 50% will further reduce insulin overdelivery. Carb recording must begin immediately to allow proper meal insulin assessment. These changes must be made sequentially, starting with DIA, and monitored closely.",
+      "evidence": "All prior stage evidence combined; contradictions resolved by prioritizing IOB accumulation as primary mechanism.",
+      "dependencies": [
+        "data_quality",
+        "safety_overview",
+        "basal_targets",
+        "profile_cr_isf_dia",
+        "automation_smb_uam",
+        "automation_sensitivity_limits",
+        "meal_bolus_strategy",
+        "meal_ecarbs_absorption"
+      ],
+      "data_gaps": "Awaiting carb data for CR and meal strategy evaluation."
+    }
+  ],
+  "strengths": [
+    "When IOB is low, glucose remains stable overnight and between meals, suggesting well-calibrated basal rates.",
+    "Overall time-in-range of 86% is acceptable and demonstrates that the system is capable of maintaining good control.",
+    "Dynamic ISF is active and responding to glucose trends, showing the automation layer is engaged."
+  ],
+  "issues": [
+    "Severe hypoglycemia episodes down to 41 mg/dL, particularly overnight.",
+    "Complete lack of carbohydrate entries forces the system to rely exclusively on UAM/SMB, leading to excessive insulin stacking.",
+    "Overly long DIA (10 h) causes IOB to accumulate from small corrections and contributes to late hypoglycemia.",
+    "Current ISF (56 mg/dL/U) overestimates insulin sensitivity, as evidenced by much larger glucose drops after small corrections.",
+    "Aggressive SMB settings (always-on, 3-minute interval, 15-20 minute max basal minutes) amplify insulin delivery in the absence of meal declarations."
+  ],
+  "recommendations": [
+    {
+      "area": "dia",
+      "title": "Reduce DIA to prevent IOB accumulation",
+      "priority": "high",
+      "description": "The 10-hour DIA is the primary driver of IOB stacking from multiple small corrections, causing overnight hypoglycemia. Reducing DIA to 6 hours will allow IOB to decay appropriately and lower overall insulin burden.",
+      "suggested_change": {
+        "from": "10 h",
+        "to": "6 h"
+      }
+    },
+    {
+      "area": "isf",
+      "title": "Increase ISF to match observed sensitivity",
+      "priority": "high",
+      "description": "Observed correction drops are consistently larger than predicted by ISF 56 mg/dL/U. Raising ISF to 70 mg/dL/U will reduce the amount of insulin delivered for corrections and decrease post-correction lows.",
+      "suggested_change": {
+        "from": "56 mg/dL/U",
+        "to": "70 mg/dL/U"
+      }
+    },
+    {
+      "area": "smb_activation",
+      "title": "Disable always-on SMB to reduce micro-bolus frequency",
+      "priority": "high",
+      "description": "With no meal entries, always-on SMB delivers unnecessary micro-boluses during unexplained glucose rises, which stacks insulin. Disabling it until carb logs are available will reduce IOB accumulation.",
+      "suggested_change": {
+        "smb_always_enabled": false
+      }
+    },
+    {
+      "area": "smb_strength",
+      "title": "Moderate SMB delivery strength",
+      "priority": "medium",
+      "description": "Increase SMB interval to 10 minutes and reduce max SMB basal minutes (10 min) and max UAM SMB basal minutes (15 min) to limit the size and frequency of micro-boluses.",
+      "suggested_change": {
+        "smb_interval_minutes": "10 min",
+        "max_smb_basal_minutes": "10 min",
+        "max_uam_smb_basal_minutes": "15 min"
+      }
+    },
+    {
+      "area": "dynamic_isf",
+      "title": "Reduce Dynamic ISF factor to lessen sensitivity over-estimation",
+      "priority": "medium",
+      "description": "The 70% factor allows the system to over-adjust when it misinterprets meal rises as insulin resistance. A factor of 50% will dampen the over-estimation and reduce extra insulin delivery while keeping Dynamic ISF active.",
+      "suggested_change": {
+        "dynamic_isf_adjustment_factor_percent": "50 %"
+      }
+    }
+  ],
+  "profile_recommendation": {
+    "focus": "dia",
+    "decision": "change",
+    "recommendation": "Reduce DIA from 10 hours to 6 hours.",
+    "rationale": "The cumulative IOB from small corrections together with a 10-hour DIA is the most likely cause of severe overnight and post-correction hypoglycemia. Shortening DIA will allow IOB to decay faster and reduce insulin stacking.",
+    "confidence": "medium",
+    "next_check": "After changing DIA, monitor overnight glucose for one week without altering any other setting. Expect TBR to decrease significantly; if overnight lows persist, re-assess basal rates."
+  },
+  "parameter_decisions": [
+    {
+      "parameter_key": "profile.basal.00_00",
+      "parameter": "Profile / basal 00:00",
+      "current_value": "0.6 U/h",
+      "suggested_value": null,
+      "decision": "keep",
+      "rationale": "The overnight hypoglycemia pattern is primarily driven by IOB accumulation, not by an excessively high basal rate. This rate will be kept and re-evaluated after DIA and other changes take effect."
+    },
+    {
+      "parameter_key": "profile.basal.05_00",
+      "parameter": "Profile / basal 05:00",
+      "current_value": "0.7 U/h",
+      "suggested_value": null,
+      "decision": "keep",
+      "rationale": "No clear evidence of basal insufficiency; morning rises may be post-prandial. Will re-assess after meal logging begins."
+    },
+    {
+      "parameter_key": "profile.basal.06_00",
+      "parameter": "Profile / basal 06:00",
+      "current_value": "0.8 U/h",
+      "suggested_value": null,
+      "decision": "keep",
+      "rationale": "No clear evidence of basal insufficiency; pattern suggests meal-related peaks."
+    },
+    {
+      "parameter_key": "profile.basal.10_00",
+      "parameter": "Profile / basal 10:00",
+      "current_value": "0.7 U/h",
+      "suggested_value": null,
+      "decision": "keep",
+      "rationale": "Daytime hyperglycemia cannot be attributed to basal without meal data."
+    },
+    {
+      "parameter_key": "profile.basal.16_00",
+      "parameter": "Profile / basal 16:00",
+      "current_value": "0.5 U/h",
+      "suggested_value": null,
+      "decision": "keep",
+      "rationale": "Afternoon TAR may be due to missing meal boluses rather than insufficient basal."
+    },
+    {
+      "parameter_key": "profile.basal.18_00",
+      "parameter": "Profile / basal 18:00",
+      "current_value": "0.6 U/h",
+      "suggested_value": null,
+      "decision": "keep",
+      "rationale": "No strong evidence for change; evening lows likely IOB-related."
+    },
+    {
+      "parameter_key": "profile.basal.19_00",
+      "parameter": "Profile / basal 19:00",
+      "current_value": "0.7 U/h",
+      "suggested_value": null,
+      "decision": "keep",
+      "rationale": "No strong evidence for change."
+    },
+    {
+      "parameter_key": "profile.cr.00_00",
+      "parameter": "Profile / CR 00:00",
+      "current_value": "13 g/U",
+      "suggested_value": null,
+      "decision": "keep",
+      "rationale": "Cannot evaluate without carb entries."
+    },
+    {
+      "parameter_key": "profile.cr.04_00",
+      "parameter": "Profile / CR 04:00",
+      "current_value": "11.1 g/U",
+      "suggested_value": null,
+      "decision": "keep",
+      "rationale": "Cannot evaluate without carb entries."
+    },
+    {
+      "parameter_key": "profile.cr.08_00",
+      "parameter": "Profile / CR 08:00",
+      "current_value": "13.2 g/U",
+      "suggested_value": null,
+      "decision": "keep",
+      "rationale": "Cannot evaluate without carb entries."
+    },
+    {
+      "parameter_key": "profile.cr.16_00",
+      "parameter": "Profile / CR 16:00",
+      "current_value": "10.5 g/U",
+      "suggested_value": null,
+      "decision": "keep",
+      "rationale": "Cannot evaluate without carb entries."
+    },
+    {
+      "parameter_key": "profile.cr.20_00",
+      "parameter": "Profile / CR 20:00",
+      "current_value": "12.6 g/U",
+      "suggested_value": null,
+      "decision": "keep",
+      "rationale": "Cannot evaluate without carb entries."
+    },
+    {
+      "parameter_key": "profile.isf.00_00",
+      "parameter": "Profile / ISF 00:00",
+      "current_value": "56 mg/dL/U",
+      "suggested_value": "70 mg/dL/U",
+      "decision": "change",
+      "rationale": "Observed correction responses drop much more than 56 mg/dL per unit; raising ISF to 70 will reduce insulin delivery for corrections and lower post-correction hypoglycemia risk. Dependent on DIA reduction first."
+    },
+    {
+      "parameter_key": "profile.target.00_00",
+      "parameter": "Profile / target 00:00",
+      "current_value": "90 mg/dL",
+      "suggested_value": null,
+      "decision": "keep",
+      "rationale": "Target is appropriate; overnight lows are IOB-driven, not target-driven."
+    },
+    {
+      "parameter_key": "profile.target.08_00",
+      "parameter": "Profile / target 08:00",
+      "current_value": "100 mg/dL",
+      "suggested_value": null,
+      "decision": "keep",
+      "rationale": "Target is reasonable; daytime patterns cannot be separated from meal effects."
+    },
+    {
+      "parameter_key": "profile.target.23_00",
+      "parameter": "Profile / target 23:00",
+      "current_value": "90 mg/dL",
+      "suggested_value": null,
+      "decision": "keep",
+      "rationale": "Target is appropriate."
+    },
+    {
+      "parameter_key": "profile.dia",
+      "parameter": "Profile / DIA",
+      "current_value": "10 h",
+      "suggested_value": "6 h",
+      "decision": "change",
+      "rationale": "Primary driver of IOB accumulation; shortening to 6 h will reduce insulin stacking and overnight hypoglycemia."
+    },
+    {
+      "parameter_key": "aaps.core.smb_uam",
+      "parameter": "AAPS / SMB and UAM",
+      "current_value": "smb_enabled=true; uam_enabled=true",
+      "suggested_value": null,
+      "decision": "keep",
+      "rationale": "Retaining UAM is necessary to detect unannounced meals; SMB will be tempered through activation and strength changes rather than disabling core SMB."
+    },
+    {
+      "parameter_key": "aaps.core.smb_activation",
+      "parameter": "AAPS / SMB activation conditions",
+      "current_value": "smb_always_enabled=true; smb_with_cob_enabled=false; smb_after_carbs_enabled=false; smb_with_temp_target_enabled=true; smb_with_high_temp_target_enabled=false",
+      "suggested_value": "smb_always_enabled=false; smb_with_cob_enabled=false; smb_after_carbs_enabled=false; smb_with_temp_target_enabled=true; smb_with_high_temp_target_enabled=false",
+      "decision": "change",
+      "rationale": "Disabling always-on SMB eliminates micro-boluses during unexplained BG rises, reducing insulin stacking until carb data are available. Other conditions are unchanged."
+    },
+    {
+      "parameter_key": "aaps.core.smb_delivery",
+      "parameter": "AAPS / SMB strength and frequency",
+      "current_value": "smb_interval_minutes=3 min; max_smb_basal_minutes=15 min; max_uam_smb_basal_minutes=20 min",
+      "suggested_value": "smb_interval_minutes=10 min; max_smb_basal_minutes=10 min; max_uam_smb_basal_minutes=15 min",
+      "decision": "change",
+      "rationale": "Increasing the interval and decreasing max basal minutes reduce the frequency and size of micro-boluses, further lowering IOB accumulation while preserving some UAM response."
+    },
+    {
+      "parameter_key": "aaps.core.safety_limits",
+      "parameter": "AAPS / max basal and max IOB limits",
+      "current_value": "max_basal_u_per_hour=12 U/h; max_iob_units=25 U",
+      "suggested_value": null,
+      "decision": "keep",
+      "rationale": "Limits are not restrictive and not contributing to hypoglycemia; they provide a safe ceiling currently."
+    },
+    {
+      "parameter_key": "aaps.core.sensitivity",
+      "parameter": "AAPS / Autosens and Dynamic ISF",
+      "current_value": "autosens_enabled=false; dynamic_sensitivity_enabled=true; autosens_raises_target=false; autosens_lowers_target=false; dynamic_isf_adjustment_factor_percent=70 %",
+      "suggested_value": "autosens_enabled=false; dynamic_sensitivity_enabled=true; autosens_raises_target=false; autosens_lowers_target=false; dynamic_isf_adjustment_factor_percent=50 %",
+      "decision": "change",
+      "rationale": "Lowering the factor to 50% reduces the risk of Dynamic ISF over-estimating insulin resistance, which currently increases insulin delivery in the absence of meal declarations."
+    },
+    {
+      "parameter_key": "aaps.core.carb_absorption",
+      "parameter": "AAPS / carbohydrate absorption model",
+      "current_value": "min_5m_carbimpact=8 mg/dL/5 min; meal_max_absorption_hours=7 h",
+      "suggested_value": null,
+      "decision": "keep",
+      "rationale": "These settings cannot be verified without meal logs; they are unlikely primary drivers of hypoglycemia."
+    }
+  ],
+  "meal_strategy_summary": {
+    "suggestion": "Log all carbohydrates immediately. Until sufficient data exists, rely on tempered SMB/UAM and temp basals to cover meals. Do not add preboluses or change CR until meal patterns are clear.",
+    "rationale": "The absence of carb entries forces reactive UAM/SMB, which with aggressive settings creates dangerous insulin stacking. Introducing carb logging is the first step to allowing proactive meal insulin and reducing hypoglycemia risk.",
+    "confidence": "low",
+    "next_observation": "One week of accurate meal logs with corresponding CGM data to assess post-prandial excursions.",
+    "exceptions": []
+  },
+  "implementation_steps": [
+    "Reduce DIA from 10 h to 6 h. Monitor overnight and correction responses for at least 3 days before making any other change.",
+    "After verifying that overnight TBR has decreased, increase ISF from 56 mg/dL/U to 70 mg/dL/U. Observe correction responses for another 3-7 days.",
+    "Disable smb_always_enabled (set to false).",
+    "Change SMB settings: smb_interval_minutes to 10 min, max_smb_basal_minutes to 10 min, max_uam_smb_basal_minutes to 15 min.",
+    "Reduce Dynamic ISF adjustment factor to 50%.",
+    "Monitor glucose patterns for one full week after all above changes. If hypoglycemia persists, consider small basal reductions overnight.",
+    "Begin recording all carbohydrate entries immediately. After one week of reliable meal logs, re-evaluate CR, meal-bolus timing, and e-carb needs."
+  ],
+  "education": [
+    "DIA affects how long insulin is considered active in IOB calculations. A long DIA can cause IOB to accumulate across multiple corrections, leading to insulin stacking and late hypoglycemia.",
+    "ISF defines how much one unit of insulin is expected to lower blood glucose. If actual drops are larger, the ISF should be increased (e.g., from 56 to 70 mg/dL/U) so the system delivers less insulin for the same correction.",
+    "Dynamic ISF adjusts ISF based on observed sensitivity, but without meal declarations it may misinterpret meal-related rises as insulin resistance, resulting in overly aggressive insulin delivery. A lower adjustment factor dampens this effect."
+  ],
+  "safety_notes": [
+    "All changes are decision-support only. The user must independently verify each proposed change, apply changes one at a time, and monitor glucose closely.",
+    "Do not change multiple settings simultaneously. Follow the implementation order to isolate the effect of each modification.",
+    "Severe hypoglycemia events were present in the data; safety must be prioritized over time-in-range improvements. Keep fast-acting carbohydrates accessible at all times.",
+    "This analysis cannot replace medical advice. Discuss any proposed changes with a healthcare professional before implementing."
+  ]
+}

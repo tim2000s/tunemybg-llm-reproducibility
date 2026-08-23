@@ -1,0 +1,372 @@
+{
+  "summary": "Over 14 days, CGM coverage is good and time in range is high, but time below range is 5.1% with severe lows and a clock-hour pattern of afternoon highs then evening and early-night lows. Carbs were not logged, the declared meal strategy is empty, and the loop ran as always-on UAM/SMB with Dynamic ISF. No profile or AAPS inventory value has isolated support for a change.",
+  "analysis_steps": [
+    {
+      "key": "data_quality",
+      "status": "completed",
+      "confidence": "high",
+      "findings": "Nightscout coverage is 98.7% over about 14 days with a 5-minute cadence, 10 gaps, and a largest gap of 65 minutes. The selected AAPS profile is complete and declared historically applicable. Carb treatments are zero. Review slices of treatments, events, and loop statuses are samples, not a full insulin timeline. A profile switch, site and sensor changes, GLP-1 notes, and an occlusion occurred during the window.",
+      "evidence": "3995 valid of 4046 expected entries; treatment_summary total_carbs_g 0; carb_treatment_entries empty; profile_context historical_applicability yes; events include site, sensor, profile switch, GLP-1, and occlusion.",
+      "dependencies": "None.",
+      "data_gaps": "No meal or activity log and only representative treatments and loop statuses."
+    },
+    {
+      "key": "safety_overview",
+      "status": "completed",
+      "confidence": "high",
+      "findings": "Mean glucose 121.6 mg/dL, TIR 86%, TAR 8.9%, TBR 5.1%, CV 32.6%. Severe lows include 41-42 mg/dL. Local TBR is concentrated at 00:00-03:00 and 19:00. Local TAR peaks at 14:00-17:00, especially 16:00. Hypoglycemia risk limits any later increase in evening or overnight insulin.",
+      "evidence": "glucose_summary; daily_glucose TBR spikes; hourly_glucose_local TBR 18.5% at 01:00 and 15.3% at 19:00; TAR 32.1% at 16:00; glucose_extremes 41-42 and 290-293 mg/dL.",
+      "dependencies": "data_quality: gaps do not create the repeating clock-hour TBR and TAR pattern.",
+      "data_gaps": "No rescue-carb or hypo-treatment records and no complete SMB-by-SMB IOB timeline."
+    },
+    {
+      "key": "basal_targets",
+      "status": "partial",
+      "confidence": "medium",
+      "findings": "Overnight means sit near the 90 mg/dL target but 00:00-03:00 TBR is high, so overnight insulin or target tightness is possible and overnight basal is not light. Hours 04:00-08:00 are stable. The 16:00 basal of 0.5 U/h lines up with peak TAR, and 19:00 basal of 0.7 U/h lines up with peak evening TBR, but unlogged intake, UAM, temporary targets, site issues, and stacked IOB remain plausible. No basal or target value is isolated enough to change.",
+      "evidence": "Basal segments 0.6/0.7/0.8/0.7/0.5/0.6/0.7 U/h; targets 90 then 100 then 90 mg/dL; hourly_glucose_local; temporary targets of 135 mg/dL; occlusion on 2026-08-19.",
+      "dependencies": "safety_overview hypo veto on adding insulin at 18:00-20:00 and 23:00-03:00; data_quality zero carbs block daytime basal attribution.",
+      "data_gaps": "No fasting flags and no night-by-night IOB pairing for 00:00-03:00 lows."
+    },
+    {
+      "key": "profile_cr_isf_dia",
+      "status": "partial",
+      "confidence": "low",
+      "findings": "CR segments were unused because no carbs were announced. Profile ISF is a flat 56 mg/dL/U, but sampled variable_sens often ran far from 56 while Dynamic ISF was on. Correction windows are not clean ISF tests: some small corrections were followed by large rises and others by crashes. DIA 10 h can leave evening UAM in IOB against the overnight 90 mg/dL target. No CR, ISF, or DIA number is supported as a change.",
+      "evidence": "carb_ratio_segments present; isf 56; dia_hours 10; therapy_response_windows all Correction Bolus with mixed 120-360 minute outcomes; loop variable_sens about 28-124.",
+      "dependencies": "basal_targets competing explanations for the afternoon swing; safety_overview against strengthening ISF or shortening DIA first.",
+      "data_gaps": "No meal-linked CR tests and no isolated correction-at-target tests."
+    },
+    {
+      "key": "automation_smb_uam",
+      "status": "completed",
+      "confidence": "medium",
+      "findings": "SMB and UAM are on, SMB is always enabled, and COB is 0 in sampled statuses, so UAM/SMB is the observed meal controller rather than duplicate COB counting. Delivery settings exist, but sampled microboluses and high-boost SMB sizes do not look like simple 15-20 minute basal-minute caps, and reason text is not stock oref1. High COB-zero IOB then evening and overnight lows is the main automation safety signal. Change is unsupported.",
+      "evidence": "smb_enabled and uam_enabled true; smb_always_enabled true; interval 3 min; max SMB 15 min; max UAM SMB 20 min; loop reasons COB 0 with IOB up to about 4.7-5.9 U and SMB sizes such as 0.3-1.6 U.",
+      "dependencies": "safety_overview; basal_targets; profile_cr_isf_dia.",
+      "data_gaps": "No full SMB sequence and custom dosing text makes stock SMB-minute math uncertain."
+    },
+    {
+      "key": "automation_sensitivity_limits",
+      "status": "completed",
+      "confidence": "medium",
+      "findings": "Autosens is off and Dynamic ISF is on at 70%, which matches variable_sens diverging from profile ISF 56 at highs. Max basal 12 U/h and max IOB 25 U are far above scheduled basal and observed IOB and did not bind. Carb-absorption settings had no COB to act on. A sensitivity_ratio of 1 is a neutral current adjustment, not disabled Autosens. Automation may be compensating for unlogged meals or amplifying late insulin; those are not separated. All six AAPS groups stay keep.",
+      "evidence": "autosens_enabled false; dynamic_sensitivity_enabled true; AF 70%; max_basal 12 U/h; max_iob 25 U; min_5m_carbimpact 8; meal_max_absorption_hours 7; enacted high temps near 4 U/h.",
+      "dependencies": "automation_smb_uam because Dynamic ISF sets the ISF that SMB/UAM doses against.",
+      "data_gaps": "No on/off comparison for Dynamic ISF and no meal-announced comparison for UAM."
+    },
+    {
+      "key": "meal_bolus_strategy",
+      "status": "partial",
+      "confidence": "low",
+      "findings": "User-declared meal_strategies is an empty list and strategy_stable_for_period is null, so there is no declared prebolus_minutes or immediate_bolus_percent to reproduce. Observed execution is UAM/SMB plus small corrections, not an announced meal bolus path. Prebolus and immediate bolus percent cannot be inferred.",
+      "evidence": "analysis_context meal_strategies []; therapy_response_windows all Correction Bolus; representative_treatments show temp basals and corrections only.",
+      "dependencies": "CR unused; SMB/UAM always on; hypo risk after afternoon stacking.",
+      "data_gaps": "No declared or logged meal bolus timing or immediate bolus percent."
+    },
+    {
+      "key": "meal_ecarbs_absorption",
+      "status": "completed",
+      "confidence": "high",
+      "findings": "No regular carb or e-carb entries exist. E-carbs are not an extended bolus and none should be invented from afternoon averages. Absorption settings were idle.",
+      "evidence": "carb_treatment_entries empty; extended_carb_entries 0; all response windows is_extended_carbs false.",
+      "dependencies": "meal_bolus_strategy and idle carb-absorption settings.",
+      "data_gaps": "No e-carb amount, start offset, or duration because those fields were not declared and not logged."
+    },
+    {
+      "key": "synthesis_plan",
+      "status": "completed",
+      "confidence": "medium",
+      "findings": "The ranked explanation is late UAM/SMB and Dynamic ISF covering unlogged daytime rises, then residual IOB against evening and overnight targets, with GLP-1 and at least one occlusion as confounders. Afternoon TAR is not assigned to the 16:00 basal of 0.5 U/h. Evening TBR is not assigned to a 19:00 basal cut. CR and e-carbs have no tests. Competing levers are overnight target, overnight basal, DIA, UAM/SMB, and Dynamic ISF; none is isolated, so every inventory row is keep and only sequential observation is supported.",
+      "evidence": "Combined hourly_glucose_local, zero carbs, DynISF variable_sens, high COB-zero IOB, therapy crashes after afternoon corrections, and empty declared meal strategy.",
+      "dependencies": "All prior stages.",
+      "data_gaps": "The single highest-yield missing observation is whether 09:00-12:00 and 14:00-17:00 rises had carbs."
+    }
+  ],
+  "strengths": [
+    "CGM coverage of 98.7% is adequate for clock-hour review.",
+    "Overall TIR is 86% with a mean glucose of 121.6 mg/dL.",
+    "Local 04:00-08:00 is mostly in range, so dawn basal is not an obvious weak segment.",
+    "The selected profile is complete, including basal, CR, ISF, target, DIA, and the six AAPS groups.",
+    "High temporary targets of 135 mg/dL were used at times, which limits reading those windows as automation failure."
+  ],
+  "issues": [
+    "Time below range is 5.1% with severe lows to 41-42 mg/dL.",
+    "Local TBR clusters at 00:00-03:00 and around 19:00.",
+    "Local TAR clusters at 14:00-17:00, then glucose often falls.",
+    "No carbs were logged and the declared meal strategy is empty, so CR, prebolus, and e-carbs cannot be tested.",
+    "Always-on UAM/SMB with Dynamic ISF produced high IOB while COB stayed 0.",
+    "Site changes, a profile switch, GLP-1 notes, and an occlusion confound several days."
+  ],
+  "recommendations": [
+    {
+      "area": "target",
+      "title": "Keep the full profile and first separate overnight lows from residual IOB",
+      "priority": "high",
+      "description": "Overnight target 90 mg/dL sits on a high 00:00-03:00 TBR band, but evening UAM, DIA 10 h, Dynamic ISF, and overnight basal 0.6 U/h are not separated. No profile number is supported for change.",
+      "suggested_change": {
+        "action": "keep",
+        "parameter_key": "profile.target.00_00",
+        "current_value": "90 mg/dL",
+        "paired_keep": [
+          "profile.basal.00_00",
+          "profile.dia"
+        ],
+        "next_review": "00:00-03:00 TBR only on nights with near-zero IOB"
+      }
+    },
+    {
+      "area": "meal",
+      "title": "Log daytime carb presence before any afternoon basal, CR, SMB, or Dynamic ISF review",
+      "priority": "medium",
+      "description": "The 09:00-17:00 rise then 18:00-19:00 fall can be unlogged intake, late UAM, or profile shape. Meal logging is the observation that changes the safe order and prevents changing dependent automation and profile levers together.",
+      "suggested_change": {
+        "action": "observe",
+        "windows_local": [
+          "09:00-12:00",
+          "14:00-17:00"
+        ],
+        "note_if_zero_carb": true,
+        "blocked_until_observed": [
+          "profile.basal.16_00",
+          "profile.cr.16_00",
+          "aaps.core.smb_uam",
+          "aaps.core.sensitivity"
+        ]
+      }
+    }
+  ],
+  "profile_recommendation": {
+    "focus": "target",
+    "decision": "keep",
+    "recommendation": "Keep every profile segment, including overnight target 90 mg/dL, daytime target 100 mg/dL, and all basal, CR, ISF, and DIA values.",
+    "rationale": "00:00-03:00 TBR near a 90 mg/dL target is the strongest profile-adjacent signal, but residual evening IOB, DIA 10 h, always-on UAM, Dynamic ISF, and overnight basal remain competing causes. Afternoon TAR has the same problem versus unlogged meals. Package evidence does not isolate one segment.",
+    "confidence": "medium",
+    "next_check": "For several 00:00-03:00 lows, record local IOB and glucose slope at 23:00-01:00; only if lows repeat with near-zero IOB and no recent UAM would overnight target 90 mg/dL be worth reviewing as a later single change."
+  },
+  "parameter_decisions": [
+    {
+      "parameter_key": "profile.basal.00_00",
+      "parameter": "Profile / basal 00:00 (U/h)",
+      "current_value": "0.6 U/h",
+      "suggested_value": "0.6 U/h",
+      "decision": "keep",
+      "rationale": "Early-night TBR exists, but target 90 mg/dL, evening UAM IOB, and DIA 10 h are not separated. Evidence does not show overnight basal is too low. Uncertainty is medium. Depends on safety_overview and automation IOB."
+    },
+    {
+      "parameter_key": "profile.basal.05_00",
+      "parameter": "Profile / basal 05:00 (U/h)",
+      "current_value": "0.7 U/h",
+      "suggested_value": "0.7 U/h",
+      "decision": "keep",
+      "rationale": "Local 05:00-06:00 TIR is high and means are near 100 mg/dL. No isolated fasting defect. Uncertainty is low. Depends on basal_targets dawn window."
+    },
+    {
+      "parameter_key": "profile.basal.06_00",
+      "parameter": "Profile / basal 06:00 (U/h)",
+      "current_value": "0.8 U/h",
+      "suggested_value": "0.8 U/h",
+      "decision": "keep",
+      "rationale": "Local 06:00-08:00 remains mostly in range. One 42 mg/dL extreme is not a repeating dawn-low pattern. Uncertainty is medium. Depends on safety_overview not generalizing a single low."
+    },
+    {
+      "parameter_key": "profile.basal.10_00",
+      "parameter": "Profile / basal 10:00 (U/h)",
+      "current_value": "0.7 U/h",
+      "suggested_value": "0.7 U/h",
+      "decision": "keep",
+      "rationale": "Late-morning rise can be unlogged intake or late UAM. Zero carbs block a basal increase. Uncertainty is high. Depends on meal_bolus_strategy."
+    },
+    {
+      "parameter_key": "profile.basal.16_00",
+      "parameter": "Profile / basal 16:00 (U/h)",
+      "current_value": "0.5 U/h",
+      "suggested_value": "0.5 U/h",
+      "decision": "keep",
+      "rationale": "This cut sits on peak TAR, but raising it would add insulin into the 18:00-19:00 TBR cluster. Meals, UAM, and Dynamic ISF are not excluded. Uncertainty is high. Depends on safety_overview and automation_smb_uam."
+    },
+    {
+      "parameter_key": "profile.basal.18_00",
+      "parameter": "Profile / basal 18:00 (U/h)",
+      "current_value": "0.6 U/h",
+      "suggested_value": "0.6 U/h",
+      "decision": "keep",
+      "rationale": "Local 18:00 already has 7.7% TBR and severe lows nearby. Adding basal is blocked. Uncertainty is medium. Depends on the hypo veto."
+    },
+    {
+      "parameter_key": "profile.basal.19_00",
+      "parameter": "Profile / basal 19:00 (U/h)",
+      "current_value": "0.7 U/h",
+      "suggested_value": "0.7 U/h",
+      "decision": "keep",
+      "rationale": "Local 19:00 TBR is 15.3% with minima of 41 mg/dL. The pattern fits stacked afternoon insulin more than a need for more 19:00 basal. Uncertainty is medium. Depends on safety_overview and therapy_response_windows."
+    },
+    {
+      "parameter_key": "profile.cr.00_00",
+      "parameter": "Profile / CR 00:00 (g/U)",
+      "current_value": "13 g/U",
+      "suggested_value": "13 g/U",
+      "decision": "keep",
+      "rationale": "No carb entries exist to test this segment. Uncertainty is high. Depends on empty meal telemetry, not on a failed CR."
+    },
+    {
+      "parameter_key": "profile.cr.04_00",
+      "parameter": "Profile / CR 04:00 (g/U)",
+      "current_value": "11.1 g/U",
+      "suggested_value": "11.1 g/U",
+      "decision": "keep",
+      "rationale": "Unused while COB stays 0. Uncertainty is high. Depends on meal_bolus_strategy."
+    },
+    {
+      "parameter_key": "profile.cr.08_00",
+      "parameter": "Profile / CR 08:00 (g/U)",
+      "current_value": "13.2 g/U",
+      "suggested_value": "13.2 g/U",
+      "decision": "keep",
+      "rationale": "Morning rises occurred without announced carbs, so this CR was not the dosing path. Uncertainty is high. Depends on UAM replacing announced meals."
+    },
+    {
+      "parameter_key": "profile.cr.16_00",
+      "parameter": "Profile / CR 16:00 (g/U)",
+      "current_value": "10.5 g/U",
+      "suggested_value": "10.5 g/U",
+      "decision": "keep",
+      "rationale": "Afternoon TAR cannot be assigned to CR tightness or looseness without carb amounts. Uncertainty is high. Depends on meal_ecarbs_absorption showing no carb rows."
+    },
+    {
+      "parameter_key": "profile.cr.20_00",
+      "parameter": "Profile / CR 20:00 (g/U)",
+      "current_value": "12.6 g/U",
+      "suggested_value": "12.6 g/U",
+      "decision": "keep",
+      "rationale": "Evening risk is hypoglycemia, not an untested CR. Uncertainty is high. Depends on safety_overview."
+    },
+    {
+      "parameter_key": "profile.isf.00_00",
+      "parameter": "Profile / ISF 00:00 (mg/dL/U)",
+      "current_value": "56 mg/dL/U",
+      "suggested_value": "56 mg/dL/U",
+      "decision": "keep",
+      "rationale": "Sampled variable_sens often differed from 56 while Dynamic ISF was on, and correction windows were mixed with unlogged intake and crashes. Changing profile ISF together with Dynamic ISF is not supported. Uncertainty is high. Depends on automation_sensitivity_limits."
+    },
+    {
+      "parameter_key": "profile.target.00_00",
+      "parameter": "Profile / target 00:00 (mg/dL)",
+      "current_value": "90 mg/dL",
+      "suggested_value": "90 mg/dL",
+      "decision": "keep",
+      "rationale": "This target aligns with 00:00-03:00 TBR, but IOB, DIA, and UAM are unresolved. A change would be the first later profile lever only after low-IOB nights still go low. Uncertainty is medium. Depends on safety_overview and DIA."
+    },
+    {
+      "parameter_key": "profile.target.08_00",
+      "parameter": "Profile / target 08:00 (mg/dL)",
+      "current_value": "100 mg/dL",
+      "suggested_value": "100 mg/dL",
+      "decision": "keep",
+      "rationale": "Daytime target 100 mg/dL is already less tight than overnight 90, and afternoon TAR persisted anyway. User 135 mg/dL temporary targets also affect this window. Uncertainty is medium. Depends on representative_events temporary targets."
+    },
+    {
+      "parameter_key": "profile.target.23_00",
+      "parameter": "Profile / target 23:00 (mg/dL)",
+      "current_value": "90 mg/dL",
+      "suggested_value": "90 mg/dL",
+      "decision": "keep",
+      "rationale": "This returns the target to 90 mg/dL heading into the early-night TBR band. Same IOB/DIA confound as the 00:00 target, so both stay keep together. Uncertainty is medium. Depends on profile.target.00_00."
+    },
+    {
+      "parameter_key": "profile.dia",
+      "parameter": "Profile / DIA (h)",
+      "current_value": "10 h",
+      "suggested_value": "10 h",
+      "decision": "keep",
+      "rationale": "A long DIA can explain leftover evening IOB, but shortening DIA would make the loop more willing to add insulin and conflicts with the hypo veto. Insulin type is not being optimized. Uncertainty is high. Depends on safety_overview and automation IOB."
+    },
+    {
+      "parameter_key": "aaps.core.smb_uam",
+      "parameter": "AAPS / SMB and UAM",
+      "current_value": "smb_enabled=true; uam_enabled=true",
+      "suggested_value": "smb_enabled=true; uam_enabled=true",
+      "decision": "keep",
+      "rationale": "This pair is the observed meal engine while carbs are unlogged. Turning UAM off is unsupported without a meal-entry plan; leaving it on does not clear the chase-and-crash. No component is null. Uncertainty is medium. Depends on meal_bolus_strategy."
+    },
+    {
+      "parameter_key": "aaps.core.smb_activation",
+      "parameter": "AAPS / SMB activation conditions",
+      "current_value": "smb_always_enabled=true; smb_with_cob_enabled=false; smb_after_carbs_enabled=false; smb_with_temp_target_enabled=true; smb_with_high_temp_target_enabled=false",
+      "suggested_value": "smb_always_enabled=true; smb_with_cob_enabled=false; smb_after_carbs_enabled=false; smb_with_temp_target_enabled=true; smb_with_high_temp_target_enabled=false",
+      "decision": "keep",
+      "rationale": "Always-on SMB matches COB 0 dosing. High-temp-target SMB is already false, which fits 135 mg/dL temporary targets. Settings are consistent, not isolated as the defect. Uncertainty is medium. Depends on automation_smb_uam."
+    },
+    {
+      "parameter_key": "aaps.core.smb_delivery",
+      "parameter": "AAPS / SMB strength and frequency",
+      "current_value": "smb_interval_minutes=3 min; max_smb_basal_minutes=15 min; max_uam_smb_basal_minutes=20 min",
+      "suggested_value": "smb_interval_minutes=3 min; max_smb_basal_minutes=15 min; max_uam_smb_basal_minutes=20 min",
+      "decision": "keep",
+      "rationale": "Configured minutes exist, but sampled SMB sizes and custom reason text mean stock cap math is uncertain. Remaining temp time is not the 3-minute interval. No new values are supported. Uncertainty is high. Depends on non-stock loop reasons."
+    },
+    {
+      "parameter_key": "aaps.core.safety_limits",
+      "parameter": "AAPS / max basal and max IOB limits",
+      "current_value": "max_basal_u_per_hour=12 U/h; max_iob_units=25 U",
+      "suggested_value": "max_basal_u_per_hour=12 U/h; max_iob_units=25 U",
+      "decision": "keep",
+      "rationale": "Limits are far above scheduled basal and observed IOB of about 6 U, so they did not bind and are not too low. No supported tighter number is isolated, and changing limits together with SMB or Dynamic ISF is withheld. Uncertainty is medium. Depends on excessive-IOB review."
+    },
+    {
+      "parameter_key": "aaps.core.sensitivity",
+      "parameter": "AAPS / Autosens and Dynamic ISF",
+      "current_value": "autosens_enabled=false; dynamic_sensitivity_enabled=true; autosens_raises_target=false; autosens_lowers_target=false; dynamic_isf_adjustment_factor_percent=70 %",
+      "suggested_value": "autosens_enabled=false; dynamic_sensitivity_enabled=true; autosens_raises_target=false; autosens_lowers_target=false; dynamic_isf_adjustment_factor_percent=70 %",
+      "decision": "keep",
+      "rationale": "Dynamic ISF is the strongest automation suspect for strong ISF at highs then evening lows, but it may also be covering unlogged meals. Autosens is off by setting; a sensitivity_ratio of 1 is not evidence Autosens ran. Do not change this with profile ISF. Uncertainty is high. Depends on profile.isf.00_00 and zero carbs."
+    },
+    {
+      "parameter_key": "aaps.core.carb_absorption",
+      "parameter": "AAPS / carbohydrate absorption model",
+      "current_value": "min_5m_carbimpact=8 mg/dL/5 min; meal_max_absorption_hours=7 h",
+      "suggested_value": "min_5m_carbimpact=8 mg/dL/5 min; meal_max_absorption_hours=7 h",
+      "decision": "keep",
+      "rationale": "These settings had no announced carbs or e-carbs to absorb. UAM is not extra COB. Uncertainty is low that they caused the observed swing. Depends on carb_treatment_entries being empty."
+    }
+  ],
+  "meal_strategy_summary": {
+    "suggestion": "There is no declared prebolus, immediate bolus percent, or e-carb plan; keep observed meal coverage as always-on UAM/SMB without adding a prebolus, an immediate percent, or e-carbs until daytime carb presence is logged.",
+    "rationale": "analysis_context.meal_strategies is empty and strategy_stable_for_period is null, which is an absent declaration rather than a Nightscout confirmation gap for non-null fields. Telemetry shows 0 g carbs, COB 0, and correction-only windows, so CR and e-carbs were unused while UAM/SMB and Dynamic ISF supplied meal insulin into later hypoglycemia risk.",
+    "confidence": "low",
+    "next_observation": "Log carb grams and clock time for local 09:00-12:00 and 14:00-17:00 rises, or note the same day that those rises were zero carb.",
+    "exceptions": [
+      {
+        "pattern": "Local 16:00-20:00 after an afternoon peak while IOB is already present",
+        "suggestion": "Do not add another meal-style or stacked correction on top of existing UAM/SMB IOB",
+        "rationale": "Several afternoons fell from the 200s to the 40s-50s within two to four hours."
+      },
+      {
+        "pattern": "Large unexplained jump near a site change or occlusion",
+        "suggestion": "Treat delivery or site first rather than adding meal insulin or e-carbs",
+        "rationale": "The 2026-08-19 occlusion and pump-error notes coincide with a 264 mg/dL correction window, which is not a CR test."
+      }
+    ]
+  },
+  "implementation_steps": [
+    "Keep the current profile and all six AAPS inventory groups unchanged while reviewing this period.",
+    "First collect the carb-or-zero-carb note for local 09:00-12:00 and 14:00-17:00 rises.",
+    "In parallel, on 00:00-03:00 low nights record IOB and glucose slope at 23:00-01:00 local.",
+    "Do not change overnight target, overnight basal, DIA, SMB/UAM, and Dynamic ISF in the same step.",
+    "Only after one of those observations isolates a cause, review a single lever with the care team, then monitor glucose closely."
+  ],
+  "education": [
+    "Time in range can look strong while time below range and evening crashes still limit safe insulin increases.",
+    "With COB 0, UAM is the meal detector, not a second carb counter, so afternoon highs are not automatic proof that basal or CR is wrong.",
+    "Dynamic ISF can make the loop use a much stronger effective ISF at high glucose than the profile ISF of 56 mg/dL/U.",
+    "E-carbs are a carb-absorption announcement, not a pump extended bolus, and cannot be reverse-engineered from an average glucose curve.",
+    "A sensitivity_ratio of 1 means the current Autosens adjustment is neutral, not that Autosens is disabled; disablement comes from the Autosens setting itself."
+  ],
+  "safety_notes": [
+    "This is decision-support content only and is not medical advice. TuneMyBG prepares data for review only.",
+    "The user must independently verify every proposed change, make at most one change at a time, and monitor glucose closely.",
+    "Severe hypoglycemia to 41-42 mg/dL and 5.1% time below range are binding constraints on adding evening or overnight insulin.",
+    "Discuss any later single-lever review with the diabetes care team before changing AAPS.",
+    "Do not change AAPS automatically from this analysis."
+  ]
+}
