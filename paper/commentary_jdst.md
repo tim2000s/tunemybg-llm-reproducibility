@@ -60,11 +60,11 @@ This research received no specific grant from any funding agency in the public, 
 
 ## Acknowledgments
 
-None.
+Claude (Anthropic, San Francisco, California, USA), a large language model assistant, was used under the author's direction to write the harness and analysis code, to run the analyses, to prepare the figures and to draft and revise the text. The author specified the study, made every decision of design and interpretation, checked each reported number against the stored outputs, and is responsible for the content.
 
 ## Disclosures
 
-The author runs Diabettech Ltd, is a committee member of the Diabetes Technology Network UK and wrote its statement on large language models. He has no relationship with the developer of the application discussed and paid for its subscription. He is not a lawyer, and this commentary is not legal advice.
+The author runs Diabettech Ltd, is a committee member of the Diabetes Technology Network UK and wrote its statement on large language models. He has no relationship with the developer of the application discussed and paid for its subscription. Three of the eleven models studied are Anthropic's, as is the assistant used to produce this work; Anthropic had no role in the study, was not informed of it, and all model usage was paid for at list price. He is not a lawyer, and this commentary is not legal advice.
 
 ## References
 1. Street T. A paid application standardises what large language models read about insulin pump settings and leaves what they decide to chance: reproducibility of an automated insulin delivery settings review across eleven models. J Diabetes Sci Technol. Submitted 2026.
