@@ -17,7 +17,7 @@ output, the validator, the analysis code, the figures and the manuscripts.
 paper/
   manuscript_jdst_original.md     the original article (JDST format); STREET Manuscript 1.docx
   commentary_jdst.md              the companion regulatory commentary; STREET Manuscript 2.docx
-  SUPPLEMENT.md                   Table S1 (served model identifiers), Table S2 (validator verification)
+  SUPPLEMENT.md                   Tables S1 (served model identifiers), S2 (validator verification), S3 (per-decision citations)
   cover_letter.md                 cover letter to the editor
   preprint_study.*                preprint versions (SSRN and diabettech.com)
   preprint_commentary.*

@@ -158,3 +158,7 @@ raised to 0.65, 7 lowered to 0.55), 18 with no causal attribution. DeepSeek ISF 
 Citation accuracy 96.8% (Opus) to 100%. Stability: Flash-Lite 0.989, Haiku 0.928, Llama 0.953,
 Opus 0.972 (others unchanged). Breaking prompt rule: Flash-Lite 6/39, Opus 5/11, Sonnet 2/19,
 DeepSeek 14/48, Llama 5/44. Table S2 now 25/25 informative pastes agree (26 samples incl. demo).
+
+## Per-decision citation check (decision_citations.py, 23 August 2026; Supplementary Table S3)
+
+Change decisions whose rationale cites at least one figure present in the package: Flash 154/160 (96%), Pro 97/141 (69%), Flash-Lite 9/10, GPT-5.6 17/20 (85%), GPT-5.4-mini 0/2, Opus 16/16, Sonnet 1/1, Haiku 27/27, DeepSeek 84/93 (90%), Grok 16/16, Llama 3/56 (5%; 53 with no figure at all). No change rationale anywhere quoted a figure absent from the package. Manuscript now states the structured-input comparison with the settings preprint is cross-study, names Llama and DeepSeek's DIA shortening (8 conversations, 5 to 8 h) as exceptions.
