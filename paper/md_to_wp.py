@@ -3,9 +3,7 @@
 import re, html
 md=open('diabettech_article.md').read(); lines=md.split('\n'); title=lines[0].lstrip('# ').strip()
 body='\n'.join(lines[1:]).strip()
-for a,b in [("once when I put the same factual questions to seven models", 'once when I put [the same factual questions to seven models](https://www.diabettech.com/ai/in-conversation-with-factual-questions-for-large-language-models/)'),
- ("again in January when ChatGPT's \"Health\" conversations", 'again in January when [ChatGPT\'s "Health" conversations](JANUARY-2026-POST-URL)'),
- ("TuneMyBG is an Android app", "[TuneMyBG](https://play.google.com/store/apps/details?id=com.adamkowalczyk.tunemybg) is an Android app"),
+for a,b in [ ("TuneMyBG is an Android app", "[TuneMyBG](https://play.google.com/store/apps/details?id=com.adamkowalczyk.tunemybg) is an Android app"),
  ("the advice my own network published in January", "the advice [my own network published in January](https://abcd.care/dtn/resource/current/dtn-uk-statement-large-language-models)"),
  ("posted as preprints here and on SSRN [preprint links]", "posted as preprints [here](STUDY-PREPRINT-URL) and [here](COMMENTARY-PREPRINT-URL) and on SSRN ([study](SSRN-STUDY-URL), [commentary](SSRN-COMMENTARY-URL))")]:
     body=body.replace(a,b)
