@@ -55,6 +55,7 @@ python3 analyse_runs.py results/real_*/ --package paper/study_package.json --out
 python3 carb_handling.py results/real_*/ --out results/carb_handling.md
 python3 citations_runs.py results/real_*/ --out results/citations.md
 python3 overnight_attribution.py results/real_*/ --out results/overnight_attribution.md
+python3 decision_citations.py         # Supplementary Table S3: do change rationales cite a record figure?
 python3 figures.py                 # Figures 1 and 2
 python3 figure_funky.py --paper    # Figure 3; without --paper, the article graphic
 ```
