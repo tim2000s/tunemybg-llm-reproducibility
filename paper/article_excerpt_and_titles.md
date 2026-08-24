@@ -49,3 +49,21 @@ instead. 11 and 14 are the most tabloid; they stay accurate because the dice met
 literally how sampling works, but they read as opinion. Recommended: 9, with the current
 standfirst replaced by "Dr Digital and the multiverse of madness, £4.49 a month." so the
 persona survives as the standfirst instead of the title.
+
+## Further ideas (second round)
+
+16. I got 490 second opinions on my insulin settings. That was the problem.
+17. The £4.49 Magic 8-ball for your insulin pump
+18. The endo lottery: £4.49 a ticket, a new draw every time you press send
+19. Every time you ask, a different doctor answers
+20. The doctor is random. The fee is not.
+21. One subscription, eleven doctors, no two agree
+22. No waiting list, no second visit needed: the digital endo never gives the same answer twice
+23. A settings review by raffle
+
+Notes: 16 keeps the first-person series formula and lands the study's actual point, that the
+problem is the plurality itself. 17 is the most shareable image and instantly understood; it
+sacrifices the endo persona. 20 is the shortest and hardest hitting; it would want the
+standfirst to name the app and the price immediately. 22 turns the app's genuine convenience
+into the indictment. 21 slightly overstates (some models do agree with each other on doing
+nothing), so if used it should become "no two tell the same story".
