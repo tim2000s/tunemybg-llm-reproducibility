@@ -66,7 +66,7 @@ Claude (Anthropic, San Francisco, California, USA), a large language model assis
 The author runs Diabettech Ltd, is a committee member of the Diabetes Technology Network UK and wrote its statement on large language models. He has no relationship with the developer of the application discussed and paid for its subscription. Three of the eleven models studied are Anthropic's, as is the assistant used to produce this work; Anthropic had no role in the study, was not informed of it, and all model usage was paid for at list price. He is not a lawyer, and this commentary is not legal advice.
 
 ## References
-1. Street T. A paid application standardises what large language models read about insulin pump settings and leaves what they decide to chance: reproducibility of an automated insulin delivery settings review across eleven models. SSRN preprint. 2026.
+1. Street T. A paid application standardises what large language models read about insulin pump settings and leaves what they decide to chance: reproducibility of an automated insulin delivery settings review across eleven models. Preprint. 2026.
 2. Kowalczyk A. TuneMyBG. Google Play. Version 1.0.5, updated 20 August 2026. https://play.google.com/store/apps/details?id=com.adamkowalczyk.tunemybg. Accessed 22 August 2026.
 3. Huckvale K, Adomaviciute S, Prieto JT, Leow MK, Car J. Smartphone apps for calculating insulin dose: a systematic assessment. BMC Med. 2015;13:106. https://doi.org/10.1186/s12916-015-0314-7
 4. Regulation (EU) 2017/745 of the European Parliament and of the Council of 5 April 2017 on medical devices. Official Journal of the European Union. 2017;L117:1-175. Article 2(1), Article 2(12), Article 7, Annex VIII Rule 11.
