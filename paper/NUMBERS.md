@@ -174,3 +174,12 @@ GPT-5.4-mini and Llama 0. Noted the exclusion of basal: Haiku 19/20 (95%), Opus 
 GPT-5.4-mini 32/48 (67%), DeepSeek 25/48, GPT-5.6 23/50, Grok 23/50. Reconstructed ~36 U/day: Opus
 11/11, Grok 29/50, Haiku 8/20, Sonnet 6/19, DeepSeek 7/48, GPT-5.6 2/50, others 0. Lowered max IOB
 while calling 19.7 a daily total: Flash 48, Pro 16, Opus 7, DeepSeek 5.
+
+## Further package-inherited splits (anomalies_scan.py, 24 August 2026; Table S5)
+
+Hour of lows: UTC array peaks 18.5% at hour 0, local at 01:00 (BST). Accepted responses placing the
+peak: 01:00 only 86, 00:00/midnight only 30 (UTC misread), both 157, neither 156; the 00-only group
+changed overnight settings less often (7/30) than the 01-only group (35/86). Diluted insulin: only
+disclosure is the profile name string; 90 responses mention it, Grok engages with kinetics in 42/50.
+mmol/L reason strings: 2 responses quote mmol ISF values; none acted on them. DeepSeek's ISF range
+30-180 tracks the package's variable_sens spread 37.9-124 (interpretation).

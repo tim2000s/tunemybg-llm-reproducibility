@@ -88,3 +88,21 @@ Post hoc analysis. The package's treatment_summary gives total_insulin_u 275.95 
 | DeepSeek V4 Pro | 48 | 5 (10; 4 to 22) | 25 (52) | 7 (15) | 5 |
 | Grok 4.6 | 50 | 26 (52; 38 to 65) | 23 (46) | 29 (58) | 0 |
 | Llama 4 Maverick | 44 | 0 (0; 0 to 8) | 0 (0) | 0 (0) | 0 |
+
+## Table S5. Further package-inherited splits
+
+Post hoc analysis over accepted conversations. Hour of the lows: the package's hourly glucose is keyed both in UTC (time below range peaks at 18.5 per cent at hour 0) and in local time (the same peak at 01:00, BST); responses are classed by where they place the peak, with '00:00 or midnight only' indicating the UTC array read as clock time. Diluted insulin: the record's use of diluted insulin is disclosed only in a free-text profile name inside Profile Switch events; counts give responses mentioning it and responses engaging with its kinetics or absorption. mmol/L: responses quoting the mmol-denominated ISF values from the loop reason strings inside the otherwise mg/dl package.
+
+| Model | Accepted | Peak at 01:00 only | Peak at 00:00 or midnight only | Both hours cited | Mentions diluted insulin | Engages with its kinetics | Quotes mmol ISF values |
+|---|---|---|---|---|---|---|---|
+| Gemini 3.6 Flash | 50 | 10 | 1 | 39 | 1 | 0 | 0 |
+| Gemini 3.1 Pro Preview | 50 | 10 | 4 | 32 | 8 | 0 | 0 |
+| Gemini 3.5 Flash-Lite | 39 | 12 | 6 | 5 | 0 | 0 | 0 |
+| GPT-5.6-sol | 50 | 10 | 0 | 39 | 4 | 1 | 0 |
+| GPT-5.4-mini | 48 | 2 | 2 | 3 | 0 | 0 | 0 |
+| Claude Opus 5 | 11 | 1 | 0 | 7 | 3 | 3 | 0 |
+| Claude Sonnet 5 | 19 | 0 | 5 | 1 | 13 | 4 | 0 |
+| Claude Haiku 4.5 | 20 | 2 | 3 | 8 | 12 | 9 | 1 |
+| DeepSeek V4 Pro | 48 | 14 | 6 | 13 | 3 | 2 | 1 |
+| Grok 4.6 | 50 | 25 | 3 | 10 | 46 | 42 | 0 |
+| Llama 4 Maverick | 44 | 0 | 0 | 0 | 0 | 0 | 0 |
