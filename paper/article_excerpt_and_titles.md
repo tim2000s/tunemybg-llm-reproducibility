@@ -30,3 +30,22 @@ by repetition and would take the current standfirst unchanged; 3 and 6 are the m
 the most searchable; 7 and 8 carry the finding in the title at the cost of the character. If
 the Marvel echo in 1 feels dated by publication, 2 keeps the persona and adds the
 reproducibility point in the title itself.
+
+## Sensational set (requested 24 August)
+
+9. I paid a digital endo to review my pump settings 490 times. It gave me 40 different sets of safety limits.
+10. Insulin roulette: the £4.49 app that spins a chatbot and calls it a settings review
+11. Would you take insulin advice from a dice roll? People are paying to.
+12. The digital endo that plays dice with your insulin
+13. My digital endo changed its mind 40 times. The app stamped every answer as checked.
+14. Chatbot roulette, £4.49 a month, your insulin settings on the table
+15. An app checked 490 AI reviews of my insulin settings. It couldn't tell a good one from a dangerous one.
+
+Accuracy notes: 9 and 13 follow the house headline formula of the carbohydrate piece and every
+claim in them is in the data (40 distinct safety-limit pairs across the three models that
+changed them; the app accepted all). 15 is defensible via the ISF 180 result but "dangerous"
+asserts a clinical judgement the paper deliberately avoids; use only with "implausible"
+instead. 11 and 14 are the most tabloid; they stay accurate because the dice metaphor is
+literally how sampling works, but they read as opinion. Recommended: 9, with the current
+standfirst replaced by "Dr Digital and the multiverse of madness, £4.49 a month." so the
+persona survives as the standfirst instead of the title.
