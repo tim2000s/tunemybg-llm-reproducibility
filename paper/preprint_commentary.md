@@ -2,7 +2,7 @@
 
 Tim Street, MEng BEng (Hons), ORCID 0009-0008-4417-6581. Diabettech Ltd, London, United Kingdom. tim@diabettech.com
 
-Preprint, not peer reviewed. Posted to SSRN and diabettech.com in August 2026.
+Preprint, not peer reviewed. August 2026. Also available at diabettech.com.
 
 Abbreviations: AID, automated insulin delivery; IMDRF, International Medical Device Regulators Forum; LLM, large language model; MDCG, Medical Device Coordination Group; MDR, Regulation (EU) 2017/745 on medical devices; MDSW, medical device software; MHRA, Medicines and Healthcare products Regulatory Agency.
 
