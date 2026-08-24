@@ -67,3 +67,37 @@ sacrifices the endo persona. 20 is the shortest and hardest hitting; it would wa
 standfirst to name the app and the price immediately. 22 turns the app's genuine convenience
 into the indictment. 21 slightly overstates (some models do agree with each other on doing
 nothing), so if used it should become "no two tell the same story".
+
+## Third round: paid ease, LLM mechanism, randomness by that very act
+
+Each given as title plus standfirst, since the brief has four elements and the pair carries
+them better than a title alone.
+
+24. The app that makes pump tuning easy by making it random.
+    Standfirst: TuneMyBG charges £4.49 a month to package your diabetes data for whichever
+    chatbot you like. The chatbot is why you get a different answer every time.
+
+25. £4.49 a month to make your insulin decisions random.
+    Standfirst: A new app promises an easier way to review your AAPS settings: tidy data, four
+    prompts, any AI you like. I ran it 490 times. The ease is real, and so is the roulette.
+
+26. Making diabetes easier, one random answer at a time.
+    Standfirst: The world's first digital endocrinologist works by sending your data to a
+    language model, and that is exactly why it cannot give you the same advice twice.
+
+27. Pay the app, ask the AI, roll the dice.
+    Standfirst: A settings review built on a language model is random by construction. The app
+    charges £4.49 a month and checks the shape of the answer, never the answer.
+
+28. The subscription that turns your pump settings into a coin toss.
+    Standfirst: TuneMyBG makes reviewing your settings genuinely easier. It also makes the
+    outcome genuinely random, because that is what asking a chatbot means.
+
+29. Random by design: the paid app that outsources your insulin settings to a chatbot.
+    Standfirst: Eleven models, 490 conversations, one record, forty different pairs of safety
+    limits, and an app that accepted them all.
+
+Notes: 24 is the tightest statement of the brief, ease and randomness as cause and effect in
+eleven words. 26 keeps the Dr Digital persona available for the body. 27 gives the mechanism
+as a three-step instruction, which is how the app actually works. 28 concedes the genuine
+convenience before taking it away, the calm-then-damning register of the house style.
