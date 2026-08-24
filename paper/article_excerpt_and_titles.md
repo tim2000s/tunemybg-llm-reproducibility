@@ -101,3 +101,12 @@ Notes: 24 is the tightest statement of the brief, ease and randomness as cause a
 eleven words. 26 keeps the Dr Digital persona available for the body. 27 gives the mechanism
 as a three-step instruction, which is how the app actually works. 28 concedes the genuine
 convenience before taking it away, the calm-then-damning register of the house style.
+
+## AI named in the title (variants of the third round)
+
+24a. The AI app that makes pump tuning easy by making it random.
+25a. £4.49 a month for AI to make your insulin decisions random.
+26a. Making diabetes easier, one random AI answer at a time.
+27.  Pay the app, ask the AI, roll the dice. (already carries it)
+28a. The AI subscription that turns your pump settings into a coin toss.
+29a. Random by design: the paid app that hands your insulin settings to AI.
