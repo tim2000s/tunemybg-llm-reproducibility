@@ -1,6 +1,6 @@
-# Dr Digital and the Multiverse of Madness
+# The world's first digital endo that asks AI: why you should keep your money
 
-The world's first digital endocrinologist, and why you should keep your money.
+Dr Digital and the multiverse of madness, £4.49 a month.
 
 People with type 1 diabetes have been asking chatbots to look at their data for a while now, and this year I have spent a good deal of time finding out what happens when you ask the same question more than once. In April I asked four models to [count the carbohydrates in thirteen photographs, 26,904 times in all](https://www.diabettech.com/i-asked-ai-to-count-my-carbs-27000-times-it-couldnt-give-me-the-same-answer-twice/), and could not get the same answer twice. A week later I gave [five models a week of raw pump data from three users and asked for settings](https://www.diabettech.com/five-ai-models-three-users-one-finding-the-settings-came-from-the-textbook-not-the-data/), and the settings came from the textbook rather than the data. In both cases the person doing the asking was on their own. You exported a file or took a photograph, you pasted it in, you read what came back with the scepticism it deserved, and if you were sensible you asked again to see whether the answer held.
 
