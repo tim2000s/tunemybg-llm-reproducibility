@@ -70,3 +70,21 @@ Post hoc analysis over accepted conversations. For each decision row the rationa
 | DeepSeek V4 Pro | 93 | 84 (90; 83 to 95) | 0 | 9 | 1011 | 105 (10) |
 | Grok 4.6 | 16 | 16 (100; 81 to 100) | 0 | 0 | 1134 | 615 (54) |
 | Llama 4 Maverick | 56 | 3 (5; 2 to 15) | 0 | 53 | 956 | 0 (0) |
+
+## Table S4. How accepted conversations read the package's bolus-only insulin total
+
+Post hoc analysis. The package's treatment_summary gives total_insulin_u 275.95 over 14 days (19.7 U/day), a sum of the bolus and SMB treatment records only: the package carries no basal delivery data, and its scheduled basal profile integrates to 16.2 U/day. Response text was searched for the derived figure (19.7 or 275.95) in a daily total or TDD context, for statements that the total excludes basal or is bolus only, and for a reconstructed total near 36 U/day. Wilson 95 per cent intervals over accepted conversations.
+
+| Model | Accepted | Treated 19.7 U as a daily total or TDD, n (per cent; 95 per cent interval) | Noted the total excludes basal, n (per cent) | Reconstructed about 36 U/day, n (per cent) | Lowered max IOB while calling 19.7 a daily total |
+|---|---|---|---|---|---|
+| Gemini 3.6 Flash | 50 | 49 (98; 90 to 100) | 13 (26) | 0 (0) | 48 |
+| Gemini 3.1 Pro Preview | 50 | 16 (32; 21 to 46) | 5 (10) | 0 (0) | 16 |
+| Gemini 3.5 Flash-Lite | 39 | 0 (0; 0 to 9) | 5 (13) | 0 (0) | 0 |
+| GPT-5.6-sol | 50 | 4 (8; 3 to 19) | 23 (46) | 2 (4) | 0 |
+| GPT-5.4-mini | 48 | 0 (0; 0 to 7) | 32 (67) | 0 (0) | 0 |
+| Claude Opus 5 | 11 | 9 (82; 52 to 95) | 10 (91) | 11 (100) | 7 |
+| Claude Sonnet 5 | 19 | 2 (11; 3 to 31) | 8 (42) | 6 (32) | 0 |
+| Claude Haiku 4.5 | 20 | 4 (20; 8 to 42) | 19 (95) | 8 (40) | 0 |
+| DeepSeek V4 Pro | 48 | 5 (10; 4 to 22) | 25 (52) | 7 (15) | 5 |
+| Grok 4.6 | 50 | 26 (52; 38 to 65) | 23 (46) | 29 (58) | 0 |
+| Llama 4 Maverick | 44 | 0 (0; 0 to 8) | 0 (0) | 0 (0) | 0 |

@@ -162,3 +162,15 @@ DeepSeek 14/48, Llama 5/44. Table S2 now 25/25 informative pastes agree (26 samp
 ## Per-decision citation check (decision_citations.py, 23 August 2026; Supplementary Table S3)
 
 Change decisions whose rationale cites at least one figure present in the package: Flash 154/160 (96%), Pro 97/141 (69%), Flash-Lite 9/10, GPT-5.6 17/20 (85%), GPT-5.4-mini 0/2, Opus 16/16, Sonnet 1/1, Haiku 27/27, DeepSeek 84/93 (90%), Grok 16/16, Llama 3/56 (5%; 53 with no figure at all). No change rationale anywhere quoted a figure absent from the package. Manuscript now states the structured-input comparison with the settings preprint is cross-study, names Llama and DeepSeek's DIA shortening (8 conversations, 5 to 8 h) as exceptions.
+
+## Bolus-only insulin total (tdd_interpretation.py, 24 August 2026; Supplementary Table S4)
+
+The package's treatment_summary.total_insulin_u (275.95 U / 14 d = 19.7 U/day) sums bolus and SMB
+treatment records only; the package carries no basal delivery, and the scheduled basal integrates to
+16.2 U/day (also stated in the profile name in Profile Switch events), so the true TDD is about 36
+U/day. Accepted conversations treating 19.7 as a daily total/TDD: Flash 49/50 (98%; 90 to 100), Pro
+16/50, Grok 26/50, Opus 9/11, Haiku 4/20, DeepSeek 5/48, GPT-5.6 4/50, Sonnet 2/19, Flash-Lite,
+GPT-5.4-mini and Llama 0. Noted the exclusion of basal: Haiku 19/20 (95%), Opus 10/11 (91%),
+GPT-5.4-mini 32/48 (67%), DeepSeek 25/48, GPT-5.6 23/50, Grok 23/50. Reconstructed ~36 U/day: Opus
+11/11, Grok 29/50, Haiku 8/20, Sonnet 6/19, DeepSeek 7/48, GPT-5.6 2/50, others 0. Lowered max IOB
+while calling 19.7 a daily total: Flash 48, Pro 16, Opus 7, DeepSeek 5.

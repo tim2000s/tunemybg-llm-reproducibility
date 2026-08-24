@@ -17,7 +17,7 @@ output, the validator, the analysis code, the figures and the manuscripts.
 paper/
   manuscript_jdst_original.md     the original article (JDST format); STREET Manuscript 1.docx
   commentary_jdst.md              the companion regulatory commentary; STREET Manuscript 2.docx
-  SUPPLEMENT.md                   Tables S1 (served model identifiers), S2 (validator verification), S3 (per-decision citations)
+  SUPPLEMENT.md                   Tables S1 (served model identifiers), S2 (validator verification), S3 (per-decision citations), S4 (bolus-only insulin total)
   cover_letter.md                 cover letter to the editor
   preprint_study.*                preprint versions (SSRN and diabettech.com)
   preprint_commentary.*
@@ -56,6 +56,7 @@ python3 carb_handling.py results/real_*/ --out results/carb_handling.md
 python3 citations_runs.py results/real_*/ --out results/citations.md
 python3 overnight_attribution.py results/real_*/ --out results/overnight_attribution.md
 python3 decision_citations.py         # Supplementary Table S3: do change rationales cite a record figure?
+python3 tdd_interpretation.py         # Supplementary Table S4: how responses read the bolus-only insulin total
 python3 figures.py                 # Figures 1 and 2
 python3 figure_funky.py --paper    # Figure 3; without --paper, the article graphic
 ```
