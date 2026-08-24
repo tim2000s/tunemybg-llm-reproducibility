@@ -1,4 +1,4 @@
-# The world's first digital endo that asks AI: why you should keep your money
+# The world's first digital endo that asks AI to fix your AID settings, and why you should keep your money
 
 Dr Digital and the multiverse of madness, £4.49 a month.
 
