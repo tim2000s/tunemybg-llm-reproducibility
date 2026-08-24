@@ -11,6 +11,8 @@ The single-record design is deliberate rather than a constraint. The question is
 
 A companion commentary, "Is an application that prepares your data and prompts for a chatbot a medical device?", is submitted alongside this article and is referred to in it; the two are written to stand alone but are best read together, and I would be glad for them to be handled as a pair. The harness, validator, analysis code, prompts, every transcript and model output, and the study package with identifiers removed are released in a public repository, and the supplementary tables give the model identifier each provider returned for every conversation, the full validator verification, and a per-decision check of whether each change's rationale cites a figure from the record, and analyses of how each model read the package's bolus-only insulin total and its other partial fields.
 
+Since the manuscripts were completed, the developer has withdrawn the application from Google Play, confirming to me that the withdrawal followed publication of these findings; both manuscripts note this, and the analysis describes the product as it was sold.
+
 In line with the journal's policy on prior posting, both pieces have been posted as preprints on SSRN and on diabettech.com; the SSRN DOIs are [DOI 1] and [DOI 2], and no updated version will be posted while the manuscripts are under review.
 
 The data analysed are my own. I run Diabettech Ltd, sit on the committee of the Diabetes Technology Network UK and wrote its statement on large language models, and I am the author of the two preprints the article cites. I have no relationship with the developer of the application and paid for its subscription. The work received no funding.
