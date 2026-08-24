@@ -99,6 +99,14 @@ def main() -> None:
                 rec["meal step"] = ms.get("status")
                 recs = [x for x in o.get("recommendations", []) if isinstance(x, dict)]
                 rec["first recommendation"] = (recs[0].get("title") or recs[0].get("area")) if recs else None
+                rec["recs_full"] = "\n".join(
+                    f"{i}. [{x.get('priority')}/{x.get('area')}] {x.get('title')}: {x.get('description')}"
+                    for i, x in enumerate(recs, 1))
+                pr_r = pr.get("rationale")
+                rec["profile_full"] = (f"focus {pr.get('focus')}, {pr.get('decision')}, confidence {pr.get('confidence')}\n"
+                                       f"{pr.get('recommendation')}\nRationale: {pr_r}")
+                rec["rationales"] = {r2.get("parameter_key"): r2.get("rationale")
+                                     for r2 in o.get("parameter_decisions", []) if isinstance(r2, dict)}
             rows.append(rec)
         data[exp] = rows
 
@@ -161,6 +169,23 @@ def main() -> None:
                 for j in range(1, len(line) + 1):
                     s.cell(row=r, column=j).font = GREY
 
+    # Detail sheets: every recommendation and the justifications for the contested settings.
+    CONTESTED = ["aaps.core.safety_limits", "profile.target.00_00", "profile.target.23_00",
+                 "profile.basal.00_00", "profile.isf.00_00", "aaps.core.sensitivity", "profile.dia"]
+    for exp, name in ORDER:
+        s2 = wb.create_sheet((name + " detail")[:31])
+        s2.append(["Conversation", "Profile recommendation", "All recommendations"]
+                  + ["justification: " + short(k) for k in CONTESTED])
+        for rec in data[exp]:
+            if not rec["accepted"]:
+                continue
+            s2.append([rec["run"], rec.get("profile_full") or "", rec.get("recs_full") or ""]
+                      + [str((rec.get("rationales") or {}).get(k) or "") for k in CONTESTED])
+            for c in s2[s2.max_row]:
+                c.alignment = Alignment(wrap_text=True, vertical="top")
+        for j in range(1, s2.max_column + 1):
+            s2.column_dimensions[get_column_letter(j)].width = 16 if j == 1 else 48
+
     # Legend + formatting on every sheet.
     for s in wb.worksheets:
         for c in s[1]:
@@ -168,9 +193,12 @@ def main() -> None:
             c.fill = HEAD
             c.alignment = Alignment(wrap_text=True, vertical="top")
         s.freeze_panes = "C2"
-        widths = {1: 18, 2: 24} if s.title != "Summary" else {1: 20, 2: 13, 3: 10}
-        for j in range(1, s.max_column + 1):
-            s.column_dimensions[get_column_letter(j)].width = widths.get(j, 16)
+        if not s.title.endswith(" detail"):
+            widths = {1: 18, 2: 24} if s.title != "Summary" else {1: 20, 2: 13, 3: 10}
+            for j in range(1, s.max_column + 1):
+                s.column_dimensions[get_column_letter(j)].width = widths.get(j, 16)
+        if s.title.endswith(" detail"):
+            continue
         n = s.max_row + 2
         s.cell(row=n, column=1, value="pale blue: same answer as most models gave to this question "
                "(modal answer over all accepted conversations of all models)").fill = SAME
