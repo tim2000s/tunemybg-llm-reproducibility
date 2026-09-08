@@ -5,7 +5,7 @@ md=open('diabettech_article.md').read(); lines=md.split('\n'); title=lines[0].ls
 body='\n'.join(lines[1:]).strip()
 for a,b in [ ("TuneMyBG is an Android app", "[TuneMyBG](https://play.google.com/store/apps/details?id=com.adamkowalczyk.tunemybg) is an Android app"),
  ("the advice my own network published in January", "the advice [my own network published in January](https://abcd.care/dtn/resource/current/dtn-uk-statement-large-language-models)"),
- ("posted as preprints [preprint links]", "posted as preprints [here](STUDY-PREPRINT-URL) and [here](COMMENTARY-PREPRINT-URL), with archived copies on [medRxiv](MEDRXIV-URL) and [Zenodo](ZENODO-URL)")]:
+ ("posted as preprints (study: https://doi.org/10.5281/zenodo.22663163; commentary: https://doi.org/10.5281/zenodo.22662770)", "posted as preprints on Zenodo ([study](https://doi.org/10.5281/zenodo.22663163) and [commentary](https://doi.org/10.5281/zenodo.22662770))")]:
     body=body.replace(a,b)
 fig='''<!-- wp:image {"align":"wide","sizeSlug":"full","linkDestination":"media"} -->
 <figure class="wp-block-image alignwide size-full"><img src="UPLOAD-fig_funky.png-TO-MEDIA-LIBRARY-AND-PASTE-URL-HERE" alt="Barcode chart: one cell per conversation for eleven language models showing the maximum insulin on board limit each proposed on the same record; DeepSeek's sensitivity factors from 30 to 180; and Gemini 3.6 Flash's headline recommendation flipping between target and basal across fifty conversations."/><figcaption class="wp-element-caption">Same record, same prompts, a fresh conversation each time. Each cell is one conversation; the app's check accepted every coloured cell.</figcaption></figure>

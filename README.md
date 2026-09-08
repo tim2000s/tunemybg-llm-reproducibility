@@ -100,8 +100,8 @@ pandoc and headless Chrome).
 
 Street T. A paid application standardises what large language models read about insulin pump
 settings and leaves what they decide to chance: reproducibility of an automated insulin
-delivery settings review across eleven models. Preprint, 2026.
+delivery settings review across eleven models. Zenodo preprint, 2026. https://doi.org/10.5281/zenodo.22663163
 
 Street T. Is an application that prepares your data and prompts for a chatbot a medical
 device? Insulin settings advice mediated by large language models under the European and
-British device regulations. Preprint, 2026.
+British device regulations. Zenodo preprint, 2026. https://doi.org/10.5281/zenodo.22662770

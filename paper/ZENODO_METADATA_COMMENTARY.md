@@ -14,7 +14,7 @@ entry to make. The files are built by `build_zenodo.py` into `paper/zenodo/`.
 ## After publishing
 
 1. Done: the cover letter carries 10.5281/zenodo.22662770 in place of `[DOI 2]`, and the study's record metadata links to it.
-2. Once the study is published, add "Is supplement to" with the study's DOI to this record as a metadata edit, which needs no new version.
+2. The study was published as 10.5281/zenodo.22663163. Add "Is supplement to" with that DOI to this record as a metadata edit, which needs no new version, unless already done.
 3. Reference 1 of the uploaded PDF cites the study by its repository URL because the study's DOI did not exist when the PDF was built. Changing it means a new version of the record with its own DOI; the URL resolves to the same material, so leaving it is reasonable.
 4. The GitHub repository named in reference 1 was private on 8 September 2026. Make it public, since the published record now points readers to it.
 

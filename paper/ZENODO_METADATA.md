@@ -1,5 +1,7 @@
 # Zenodo record metadata for the study preprint
 
+Published 8 September 2026 as https://doi.org/10.5281/zenodo.22663163 (version 1.0; concept DOI 10.5281/zenodo.22663162). Checked against the Zenodo API the same day: resource type Preprint, CC BY-NC-ND 4.0, open, five files, all five related works present including the commentary. The manuscript file was uploaded under the name "TuneMyBG_preprint_manuscript (1).pdf"; renaming it would need a new version, and the content is unaffected. What follows is the form content as prepared.
+
 Prepared 8 September 2026. medRxiv was the first choice and was dropped because its ethics
 declaration asks for the institutional body that approved or exempted the work, and this study
 has none: the only data subject is the author. SSRN rejected both pieces at screening on
@@ -12,7 +14,7 @@ Each heading below is a panel or field of the Zenodo upload form, in the form's 
 entry to make. The files named in the first section are built by `build_zenodo.py` into
 `paper/zenodo/`.
 
-## Before publishing
+## Before publishing (as it stood; items 1 and 4 remain)
 
 1. The data availability statement names the GitHub repository
    `tim2000s/tunemybg-llm-reproducibility`. It was private on 8 September 2026. Make it public
@@ -20,8 +22,7 @@ entry to make. The files named in the first section are built by `build_zenodo.p
 2. A Zenodo record cannot be deleted once published; files are fixed per version and a new
    version gets its own DOI under the same concept DOI. Metadata can be edited after publishing.
 3. The commentary was published on Zenodo on 8 September 2026 as 10.5281/zenodo.22662770; it is linked below and in the cover letter. After the study is published, add the reverse link ("Is supplement to" the study's DOI) to the commentary record as a metadata edit.
-4. After publishing, put the study's version DOI into `[DOI 1]` in the JDST cover letter and
-   into the "Also available at" line of the Diabettech article if one is added.
+4. Done on 8 September 2026: the cover letter carries 10.5281/zenodo.22663163, and the Diabettech article's placeholder for the preprint links carries both DOIs. Item 1 is also done: the repository was public by the same day.
 
 ## Files
 
