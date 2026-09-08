@@ -1,5 +1,7 @@
 # Zenodo record metadata for the commentary
 
+Published 8 September 2026 as https://doi.org/10.5281/zenodo.22662770 (version 1.0; concept DOI 10.5281/zenodo.22662769, which always resolves to the latest version). Checked against the Zenodo API the same day: resource type Preprint, licence CC BY-NC-ND 4.0, open access, one file, related works as listed below except the study link, which awaits the study's DOI. What follows is the form content as prepared; the remaining actions are in the next section.
+
 Prepared 8 September 2026. The commentary is the companion to the study preprint; the study's
 form entries are in ZENODO_METADATA.md and the two records link to each other through Related
 works. Publish the study first so that its DOI can go into this record and into the
@@ -9,17 +11,12 @@ add the study's DOI once known.
 Each heading below is a panel or field of the Zenodo upload form, in the form's order, with the
 entry to make. The files are built by `build_zenodo.py` into `paper/zenodo/`.
 
-## Before publishing
+## After publishing
 
-1. Reference 1 of the commentary cites the study by its repository URL because the study's DOI
-   did not exist when the PDF was built. Once the study is published, put its DOI into
-   `paper/preprint_commentary_zenodo.md`, rebuild, and upload the rebuilt PDF; or accept the
-   URL, which resolves to the same material.
-2. The GitHub repository named in reference 1 was private on 8 September 2026. Make it public
-   before publishing either record.
-3. A published record cannot be deleted. Metadata can be edited afterwards; a changed file
-   needs a new version, which gets its own DOI under the same concept DOI.
-4. After publishing, put the version DOI into `[DOI 2]` in the JDST cover letter.
+1. Done: the cover letter carries 10.5281/zenodo.22662770 in place of `[DOI 2]`, and the study's record metadata links to it.
+2. Once the study is published, add "Is supplement to" with the study's DOI to this record as a metadata edit, which needs no new version.
+3. Reference 1 of the uploaded PDF cites the study by its repository URL because the study's DOI did not exist when the PDF was built. Changing it means a new version of the record with its own DOI; the URL resolves to the same material, so leaving it is reasonable.
+4. The GitHub repository named in reference 1 was private on 8 September 2026. Make it public, since the published record now points readers to it.
 
 ## Files
 

@@ -19,9 +19,7 @@ entry to make. The files named in the first section are built by `build_zenodo.p
    before publishing the record, or the statement is untrue on the day of posting.
 2. A Zenodo record cannot be deleted once published; files are fixed per version and a new
    version gets its own DOI under the same concept DOI. Metadata can be edited after publishing.
-3. If the commentary record already exists, take its DOI for the Related works entry below and
-   for `[DOI 2]` in the cover letter. If it does not, publish the study first and link the
-   commentary to it when that record is made.
+3. The commentary was published on Zenodo on 8 September 2026 as 10.5281/zenodo.22662770; it is linked below and in the cover letter. After the study is published, add the reverse link ("Is supplement to" the study's DOI) to the commentary record as a metadata edit.
 4. After publishing, put the study's version DOI into `[DOI 1]` in the JDST cover letter and
    into the "Also available at" line of the Diabettech article if one is added.
 
@@ -65,7 +63,7 @@ Creators, one entry:
 Description. Zenodo renders this on the record page; plain paragraphs, no markup. The same text
 is in `TuneMyBG_preprint_abstract.txt`, preceded by the one-line note.
 
-Preprint, not peer reviewed. Under submission to the Journal of Diabetes Science and Technology. The companion commentary on the product's regulatory position is a separate Zenodo record. Code, prompts, every transcript and the study package with identifiers removed are at https://github.com/tim2000s/tunemybg-llm-reproducibility.
+Preprint, not peer reviewed. Under submission to the Journal of Diabetes Science and Technology. The companion commentary on the product's regulatory position is at https://doi.org/10.5281/zenodo.22662770. Code, prompts, every transcript and the study package with identifiers removed are at https://github.com/tim2000s/tunemybg-llm-reproducibility.
 
 Background. A paid Android application prepares a user's AndroidAPS data and four prompts for any large language model, checks the returned file and presents it as a settings review.
 
@@ -118,7 +116,7 @@ None.
 |---|---|---|---|
 | Is supplemented by | https://github.com/tim2000s/tunemybg-llm-reproducibility | URL | Software |
 | Is described by | https://www.diabettech.com/the-worlds-first-digital-endo-that-asks-ai-to-fix-your-aid-settings-and-why-you-should-keep-your-money/ | URL | Publication: Other |
-| Is supplemented by | [DOI 2], the commentary's Zenodo DOI, once known | DOI | Publication: Preprint |
+| Is supplemented by | 10.5281/zenodo.22662770 | DOI | Publication: Preprint |
 | Continues | 10.2139/ssrn.6619638 | DOI | Publication: Preprint |
 | Continues | 10.2139/ssrn.6577780 | DOI | Publication: Preprint |
 

@@ -71,8 +71,8 @@ def render(md_path: pathlib.Path, css: str, out_pdf: pathlib.Path) -> None:
 
 
 STUDY_NOTE = ("Preprint, not peer reviewed. Under submission to the Journal of Diabetes Science and "
-              "Technology. The companion commentary on the product's regulatory position is a separate "
-              "Zenodo record. Code, prompts, every transcript and the study package with identifiers "
+              "Technology. The companion commentary on the product's regulatory position is at "
+              "https://doi.org/10.5281/zenodo.22662770. Code, prompts, every transcript and the study package with identifiers "
               "removed are at https://github.com/tim2000s/tunemybg-llm-reproducibility.")
 COMMENTARY_NOTE = ("Preprint, not peer reviewed. Commentary under submission to the Journal of Diabetes "
                    "Science and Technology alongside the study it accompanies, which is a separate "
