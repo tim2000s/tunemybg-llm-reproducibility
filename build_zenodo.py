@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Build the Zenodo preprint record files from the markdown sources in paper/.
 
-Writes paper/zenodo/ with the manuscript PDF (title page, abstract, body, references, tables,
-figures), the supplementary tables as a separate PDF, the three figures as LZW TIFF and JPEG, and
+Writes paper/zenodo/ with the study manuscript PDF (title page, abstract, body, references,
+tables, figures), the supplementary tables as a separate PDF, the commentary PDF, the three figures as LZW TIFF and JPEG, and
 the abstract as plain UTF-8 text for the record's description field. The PDFs are set in Times New
 Roman, the font the set was first built in for medRxiv, which was abandoned on 8 September 2026
 because its ethics declaration requires an institutional oversight body and this study has none.
@@ -20,6 +20,7 @@ PAPER = pathlib.Path(__file__).resolve().parent / "paper"
 OUT = PAPER / "zenodo"
 MAIN_MD = PAPER / "preprint_study_zenodo.md"
 SUPP_MD = PAPER / "preprint_study_zenodo_supplement.md"
+COMM_MD = PAPER / "preprint_commentary_zenodo.md"
 FIGURES = [
     ("fig1_workflow.png", "Figure1"),
     ("fig2_suggested_values.png", "Figure2"),
@@ -69,15 +70,21 @@ def render(md_path: pathlib.Path, css: str, out_pdf: pathlib.Path) -> None:
     print(f"wrote {out_pdf}")
 
 
-def abstract_text(md_path: pathlib.Path) -> str:
+STUDY_NOTE = ("Preprint, not peer reviewed. Under submission to the Journal of Diabetes Science and "
+              "Technology. The companion commentary on the product's regulatory position is a separate "
+              "Zenodo record. Code, prompts, every transcript and the study package with identifiers "
+              "removed are at https://github.com/tim2000s/tunemybg-llm-reproducibility.")
+COMMENTARY_NOTE = ("Preprint, not peer reviewed. Commentary under submission to the Journal of Diabetes "
+                   "Science and Technology alongside the study it accompanies, which is a separate "
+                   "Zenodo record. Not legal advice.")
+
+
+def abstract_text(md_path: pathlib.Path, note: str) -> str:
+    """The Abstract section as plain paragraphs, headed by the record note, for the description field."""
     text = md_path.read_text()
     m = re.search(r"^## Abstract\s*$(.*?)^## ", text, re.S | re.M)
     body = m.group(1).strip()
     paras = [re.sub(r"\s+", " ", p).strip() for p in body.split("\n\n") if p.strip()]
-    note = ("Preprint, not peer reviewed. Under submission to the Journal of Diabetes Science and "
-            "Technology. The companion commentary on the product's regulatory position is a separate "
-            "Zenodo record. Code, prompts, every transcript and the study package with identifiers "
-            "removed are at https://github.com/tim2000s/tunemybg-llm-reproducibility.")
     return note + "\n\n" + "\n\n".join(paras) + "\n"
 
 
@@ -85,8 +92,12 @@ def main() -> None:
     OUT.mkdir(exist_ok=True)
     render(MAIN_MD, CSS_MAIN, OUT / "TuneMyBG_preprint_manuscript.pdf")
     render(SUPP_MD, CSS_SUPP, OUT / "TuneMyBG_preprint_supplement.pdf")
-    (OUT / "TuneMyBG_preprint_abstract.txt").write_text(abstract_text(MAIN_MD), encoding="utf-8")
-    print(f"wrote {OUT / 'TuneMyBG_preprint_abstract.txt'}")
+    render(COMM_MD, CSS_MAIN, OUT / "TuneMyBG_commentary_manuscript.pdf")
+    (OUT / "TuneMyBG_preprint_abstract.txt").write_text(abstract_text(MAIN_MD, STUDY_NOTE),
+                                                        encoding="utf-8")
+    (OUT / "TuneMyBG_commentary_abstract.txt").write_text(abstract_text(COMM_MD, COMMENTARY_NOTE),
+                                                          encoding="utf-8")
+    print(f"wrote {OUT / 'TuneMyBG_preprint_abstract.txt'} and TuneMyBG_commentary_abstract.txt")
     for src, stem in FIGURES:
         png = PAPER / "figures" / src
         # LZW keeps the TIFF near the PNG's size; uncompressed, the 900 dpi figures run to 95

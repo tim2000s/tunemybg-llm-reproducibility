@@ -23,9 +23,11 @@ paper/
   preprint_commentary.*
   preprint_study_zenodo.md        the study preprint as posted to Zenodo (title page, ethics statement,
   preprint_study_zenodo_supplement.md    data availability with the repository URL); Tables S1 to S5 as a separate file
-  ZENODO_METADATA.md              every field of the Zenodo record form, with the text to enter
-  zenodo/                         the record files built by build_zenodo.py: manuscript and supplement PDFs,
-                                  figures as TIFF and JPEG, abstract as plain text
+  preprint_commentary_zenodo.md   the commentary as posted to Zenodo (same header changes)
+  ZENODO_METADATA.md              every field of the Zenodo record form for the study, with the text to enter
+  ZENODO_METADATA_COMMENTARY.md   the same for the commentary's record
+  zenodo/                         the record files built by build_zenodo.py: study manuscript, supplement and
+                                  commentary PDFs, figures as TIFF and JPEG, both abstracts as plain text
   diabettech_article.md / .html   the Diabettech article and its WordPress block HTML (md_to_wp.py)
   figures/                        fig1 workflow, fig2 suggested values, fig3 conversations, fig_funky (article)
   study_package.json              the study record as the app generated it, data_source id redacted
