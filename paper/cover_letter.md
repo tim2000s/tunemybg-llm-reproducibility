@@ -13,7 +13,7 @@ A companion commentary, "Is an application that prepares your data and prompts f
 
 Since the manuscripts were completed, the developer has withdrawn the application from Google Play, confirming to me that the withdrawal followed publication of these findings; both manuscripts note this, and the analysis describes the product as it was sold.
 
-In line with the journal's policy on prior posting, both pieces have been posted as preprints, the original article on medRxiv ([DOI 1]) and the commentary on Zenodo ([DOI 2]), and on diabettech.com; no updated version will be posted while the manuscripts are under review.
+In line with the journal's policy on prior posting, both pieces have been posted as preprints, both on Zenodo (original article [DOI 1]; commentary [DOI 2]), and on diabettech.com; no updated version will be posted while the manuscripts are under review.
 
 The data analysed are my own. I run Diabettech Ltd, sit on the committee of the Diabetes Technology Network UK and wrote its statement on large language models, and I am the author of the two preprints the article cites. I have no relationship with the developer of the application and paid for its subscription. The work received no funding.
 

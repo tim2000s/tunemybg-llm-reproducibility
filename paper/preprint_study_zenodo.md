@@ -4,7 +4,7 @@ Tim Street, MEng BEng (Hons), ORCID 0009-0008-4417-6581. Diabettech Ltd, London,
 
 Corresponding author: Tim Street, Diabettech Ltd, 44 Brandram Road, London SE13 5RT, United Kingdom. tim@diabettech.com
 
-Preprint, not peer reviewed. Posted to medRxiv, September 2026. The study was run on 21 and 22 August 2026 and its findings were published in an article at diabettech.com in the same month. A companion commentary on the product's regulatory position is posted separately on Zenodo.
+Preprint, not peer reviewed. Posted to Zenodo, September 2026. The study was run on 21 and 22 August 2026 and its findings were published in an article at diabettech.com in the same month. A companion commentary on the product's regulatory position is posted separately on Zenodo.
 
 Word count: 2,953 (Introduction to Conclusions). 3 tables, 3 figures, 5 supplementary tables.
 

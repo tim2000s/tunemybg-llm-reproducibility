@@ -21,11 +21,11 @@ paper/
   cover_letter.md                 cover letter to the editor
   preprint_study.*                preprint versions (SSRN and diabettech.com)
   preprint_commentary.*
-  preprint_study_medrxiv.md       the study preprint as posted to medRxiv (title page, ethics statement,
-  preprint_study_medrxiv_supplement.md   data availability with the repository URL); Tables S1 to S5 as a separate file
-  MEDRXIV_METADATA.md             every field of the medRxiv submission form, with the text to enter
-  medrxiv/                        the submission set built by build_medrxiv.py: manuscript and supplement PDFs
-                                  in Times New Roman, figures as TIFF and JPEG, abstract as plain text
+  preprint_study_zenodo.md        the study preprint as posted to Zenodo (title page, ethics statement,
+  preprint_study_zenodo_supplement.md    data availability with the repository URL); Tables S1 to S5 as a separate file
+  ZENODO_METADATA.md              every field of the Zenodo record form, with the text to enter
+  zenodo/                         the record files built by build_zenodo.py: manuscript and supplement PDFs,
+                                  figures as TIFF and JPEG, abstract as plain text
   diabettech_article.md / .html   the Diabettech article and its WordPress block HTML (md_to_wp.py)
   figures/                        fig1 workflow, fig2 suggested values, fig3 conversations, fig_funky (article)
   study_package.json              the study record as the app generated it, data_source id redacted

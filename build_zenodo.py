@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
-"""Build the medRxiv submission set from the markdown sources in paper/.
+"""Build the Zenodo preprint record files from the markdown sources in paper/.
 
-Writes paper/medrxiv/ with the manuscript PDF (title page, abstract, body, references, tables,
-figures), the supplementary tables as a separate PDF, the three figures as TIFF and JPEG for the
-image-file upload, and the abstract as plain UTF-8 text for the submission form. The PDFs are set
-in Times New Roman because medRxiv's conversion advice names Times, Times New Roman, Courier,
-Helvetica and Arial as the fonts it renders reliably.
+Writes paper/zenodo/ with the manuscript PDF (title page, abstract, body, references, tables,
+figures), the supplementary tables as a separate PDF, the three figures as LZW TIFF and JPEG, and
+the abstract as plain UTF-8 text for the record's description field. The PDFs are set in Times New
+Roman, the font the set was first built in for medRxiv, which was abandoned on 8 September 2026
+because its ethics declaration requires an institutional oversight body and this study has none.
 
-Usage: python3 build_medrxiv.py
+Usage: python3 build_zenodo.py
 """
 import pathlib
 import re
@@ -17,9 +17,9 @@ import markdown
 from weasyprint import CSS, HTML
 
 PAPER = pathlib.Path(__file__).resolve().parent / "paper"
-OUT = PAPER / "medrxiv"
-MAIN_MD = PAPER / "preprint_study_medrxiv.md"
-SUPP_MD = PAPER / "preprint_study_medrxiv_supplement.md"
+OUT = PAPER / "zenodo"
+MAIN_MD = PAPER / "preprint_study_zenodo.md"
+SUPP_MD = PAPER / "preprint_study_zenodo_supplement.md"
 FIGURES = [
     ("fig1_workflow.png", "Figure1"),
     ("fig2_suggested_values.png", "Figure2"),
@@ -74,19 +74,23 @@ def abstract_text(md_path: pathlib.Path) -> str:
     m = re.search(r"^## Abstract\s*$(.*?)^## ", text, re.S | re.M)
     body = m.group(1).strip()
     paras = [re.sub(r"\s+", " ", p).strip() for p in body.split("\n\n") if p.strip()]
-    return "\n\n".join(paras) + "\n"
+    note = ("Preprint, not peer reviewed. Under submission to the Journal of Diabetes Science and "
+            "Technology. The companion commentary on the product's regulatory position is a separate "
+            "Zenodo record. Code, prompts, every transcript and the study package with identifiers "
+            "removed are at https://github.com/tim2000s/tunemybg-llm-reproducibility.")
+    return note + "\n\n" + "\n\n".join(paras) + "\n"
 
 
 def main() -> None:
     OUT.mkdir(exist_ok=True)
-    render(MAIN_MD, CSS_MAIN, OUT / "TuneMyBG_medRxiv_manuscript.pdf")
-    render(SUPP_MD, CSS_SUPP, OUT / "TuneMyBG_medRxiv_supplement.pdf")
-    (OUT / "TuneMyBG_medRxiv_abstract.txt").write_text(abstract_text(MAIN_MD), encoding="utf-8")
-    print(f"wrote {OUT / 'TuneMyBG_medRxiv_abstract.txt'}")
+    render(MAIN_MD, CSS_MAIN, OUT / "TuneMyBG_preprint_manuscript.pdf")
+    render(SUPP_MD, CSS_SUPP, OUT / "TuneMyBG_preprint_supplement.pdf")
+    (OUT / "TuneMyBG_preprint_abstract.txt").write_text(abstract_text(MAIN_MD), encoding="utf-8")
+    print(f"wrote {OUT / 'TuneMyBG_preprint_abstract.txt'}")
     for src, stem in FIGURES:
         png = PAPER / "figures" / src
         # LZW keeps the TIFF near the PNG's size; uncompressed, the 900 dpi figures run to 95
-        # to 138 MB each, over GitHub's file limit and slow to upload.
+        # to 138 MB each, over GitHub's file limit.
         for fmt, ext, opts in (("tiff", "tiff", ["-s", "formatOptions", "lzw"]),
                                ("jpeg", "jpg", ["-s", "formatOptions", "best"])):
             dst = OUT / f"{stem}.{ext}"

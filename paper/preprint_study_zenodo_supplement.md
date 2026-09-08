@@ -2,7 +2,7 @@
 
 Tim Street, MEng BEng (Hons), ORCID 0009-0008-4417-6581. Diabettech Ltd, London, United Kingdom. tim@diabettech.com
 
-Preprint, not peer reviewed. medRxiv, September 2026.
+Preprint, not peer reviewed. Zenodo, September 2026.
 
 ## Table S1. Model identifiers as requested and as returned by each provider
 
